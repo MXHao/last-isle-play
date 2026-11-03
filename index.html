@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0c1b24">
-<title>终局之岛 · 玩法重制版 3.9.4 · 战地规则</title>
+<title>终局之岛 · 玩法重制版 3.9.5 · 战地规则</title>
 <style>
 :root{
   --ink:#0c1b24;--ink2:#132a36;--ink3:#1d3b4a;--paper:#eef2ec;--muted:#8fa5a6;--signal:#ffc93c;--storm:#957bff;--danger:#ff5446;--ok:#6fdc8c;
@@ -650,7 +650,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="menu">
   <canvas id="menuMap"></canvas>
   <div class="mpanel">
-    <h1 class="title"><small>LAST ISLE · 3.9.4</small>终局之岛</h1>
+    <h1 class="title"><small>LAST ISLE · 3.9.5</small>终局之岛</h1>
     <p class="tagline" id="tagline">五十人空降一座孤岛。毒圈收紧，物资有限，只有一个人能离开。</p>
     <div class="islandinfo" id="islandinfo">正在生成岛屿…</div>
     <div id="modePicker" class="mode-picker"><button data-mode="br">大逃杀</button><button data-mode="battlefield">战场行动</button><button data-mode="tdm">团队竞技</button><button data-mode="infection">生化模式</button></div>
@@ -671,7 +671,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
       <button id="btnHelp">操作说明</button>
       <button id="btnCareer">生涯战绩</button>
     </div>
-    <p class="mfoot">玩法重制版 3.9.4 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
+    <p class="mfoot">玩法重制版 3.9.5 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
   </div>
 </div>
 
@@ -817,7 +817,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="fps" class="hidden"></div>
 
 <div id="loadoutPanel" class="modal hidden"><div class="sheet">
-<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.9.4</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
+<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.9.5</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
 <div class="armory-layout">
 <aside class="armory-loadout" aria-label="保存的背包">
 <h3 class="armory-section-title">我的配装 <small>保存在此设备</small></h3>
@@ -15423,7 +15423,7 @@ BioSpace279.install();
  */
 const BioMapObservatory279 = {
  spec: {
-  id:'bio_observatory279', name:'暮林观测站', version:'observatory-3.9.4', size:3200, theme:'island',
+  id:'bio_observatory279', name:'暮林观测站', version:'observatory-3.9.5', size:3200, theme:'island',
   description:'林间观测楼、设备高台与种子仓三点互保；主路登高，侧向下跳转点，中央补给院暴露在近程交火中。',
   bounds:{x:96,y:96,w:3008,h:3008},
   // Native r17 bodies must recover after a fall between supports. The original
@@ -17329,7 +17329,7 @@ const SANDTOWN280_SPEC = (()=>{
  const P = 'st_';
  const grid = (xs, ys) => ys.flatMap(y => xs.map(x => ({x, y})));
  return {
-  id:'bio_sandtown', name:'黄沙古镇', version:'sandtown-3.9.2', size:3200, theme:'desert',
+  id:'bio_sandtown', name:'黄沙古镇', version:'sandtown-3.9.5', size:3200, theme:'desert',
   description:'原创沙漠城镇，四个据点都只有一个入口：A 古堡城楼单侧宽坡、坡顶起跳台与48高台坎、B 集市水塔（96 小台）南侧单踏箱、C 屋顶独木桥（桥下可通行）、D 驼队货栈。击退能把僵尸打下坡道和木桥。',
   bounds:{x:96, y:96, w:3008, h:3008},
   platforms:[
@@ -17359,7 +17359,7 @@ const SANDTOWN280_SPEC = (()=>{
   // 112宽通道与台内留空区容纳交会；北侧靠墙、南侧开放，击退仍会掉回内院。
   ramps:[
    {sid:P+'a_ramp', x:665, y:608, w:216, h:112, rise:96, run:192, dir:'e', narrow:112, speed:170, to:P+'a_barb',
-    entry:{x:617,y:664}, foot:{x:689,y:664}, tip:{x:865,y:664}, inside:{x:913,y:664}, art:'ramp'}
+    entry:{x:617,y:664}, foot:{x:689,y:664}, tip:{x:857,y:664}, inside:{x:913,y:664}, art:'ramp'}
   ],
   // 架空木桥：桥下可以走人，只有桥面可站立
   overheads:[
@@ -18101,7 +18101,7 @@ function createArena280(spec, opts = {}){
     if(!a.alive || a.mode !== 'ground') continue;
     const z = BioPlatforms.height(a), lift = z * S, ax0 = a.x - 30, ax1 = a.x + 30, ay0 = a.y - lift - 36, ay1 = a.y - lift + 24;
     for(const e of list){
-     const m = e.meta; if(!m || (m.sid && a.bioSurface === m.sid) || a.y >= m.y1 || z >= m.top - 1 || a.x < m.x0 - 30 || a.x > m.x1 + 30 || a.y < m.y0 - 200) continue;
+     const m = e.meta; if(!m || (m.sid && a.bioSurface === m.sid) || (m.sid && a.climb393 && a.climb393.ctl?.link?.to === m.sid) || a.y >= m.y1 || z >= m.top - 1 || a.x < m.x0 - 30 || a.x > m.x1 + 30 || a.y < m.y0 - 200) continue;
      // 坡道：角色在坡面上方（空中从侧面跳上来）时不算被挡
      // East/west ramp height is constant along the viewing ray. Clamp the
      // actor's longitudinal coordinate even outside the footprint: the zero-high
@@ -18558,11 +18558,12 @@ const Occlusion281 = (()=>{
   try{
    for(const a of actors){
     if(!a.alive || a.mode !== 'ground') continue;
-    const z = BioPlatforms.height(a), lift = z * S, ax0 = a.x - 48, ax1 = a.x + 48, ay0 = a.y - lift - 48, ay1 = a.y - lift + 48, surf = a.bioSurface || '';
+    const z = BioPlatforms.height(a), lift = z * S, ax0 = a.x - 48, ax1 = a.x + 48, ay0 = a.y - lift - 48, ay1 = a.y - lift + 48, surf = a.bioSurface || '', climbTo = a.climb393?.ctl?.link?.to || null;
     const hits = [];
     for(const it of items){
      if(z >= it.top - 1 || a.x < it.x0 - 32 || a.x > it.x1 + 32) continue;
      if(it.sid && surf && (surf === it.sid || surf.startsWith(it.sid) || it.sid.startsWith(surf))) continue;
+     if(climbTo && it.sid && (it.sid === climbTo || it.sid.startsWith(climbTo))) continue; // 3.9.5 爬梯的人贴在立面外侧，不被目标台面挡住
      if(behind(it, a, z)) hits.push(it);
     }
     if(!hits.length) continue;
@@ -20851,6 +20852,8 @@ const ST392 = (()=>{
   st.plat = ar.platforms.find(p => p.sid === BR.sid) || st.plat; ar.platforms = ar.platforms.filter(p => p.sid !== BR.sid);
   if(st.slab){st.slab.mv = 0; st.slab.bl = 0; st.slab.vs = 0;}
   st.saved = ar.links.filter(e => e.bridge392); ar.links = ar.links.filter(e => !e.bridge392); if(!ar.links.includes(LINK)) ar.links.push(LINK);
+  // 3.9.5：桥面上的人不再"穿过还平放着的桥板"直接掉下去，而是随桥板翘起滑向活动端（瓮城台一侧），滑出桥头才落下
+  for(const a of G.actors) if(a.alive && !a.bioAir && a.bioSurface === BR.sid) a.slide395 = {at: G.time};
   st.raised = true; st.raisedAt = G.time; st.raises++; clearBridgePlans();
   try{UI.announce('吊桥收起！', 'storm', 'A 古堡城楼只能从瓮城台助跑飞扑上去');}catch(e){}
  }
@@ -20860,6 +20863,7 @@ const ST392 = (()=>{
   if(st.slab){st.slab.mv = 1; st.slab.bl = 1; st.slab.vs = 1;}
   ar.links = ar.links.filter(e => e !== LINK); for(const e of st.saved) if(!ar.links.includes(e)) ar.links.push(e);
   st.raised = false; st.raisedAt = -9; clearBridgePlans();
+  for(const a of G.actors) a.slide395 = null;
  }
  function tick(){
   if(st.tickT === G.time) return; st.tickT = G.time;
@@ -20869,7 +20873,21 @@ const ST392 = (()=>{
   else if(m.phase === 'prep'){st.fightAt = null; lower();}
  }
  const step0 = BioPlatforms.step;
- BioPlatforms.step = function(a, dt){if(on()) tick(); return step0.call(this, a, dt);};
+ BioPlatforms.step = function(a, dt){
+  if(on()) tick();
+  const out = step0.call(this, a, dt);
+  const sl = a.slide395;
+  if(sl){
+   const P = st.raised && on() && a.alive ? pose() : null;
+   if(!P || P.p >= 1 || a.x <= P.xe + 1 || a.climb393){a.slide395 = null; if(P && a.alive){a.bioAir = true; a.bioVz = Math.min(a.bioVz || 0, 0); a.bioSurface = null;}}
+   else{
+    // 贴着翘起的桥板：高度 = 桥板在该处的高度，速度朝活动端越滑越快（不受操控）
+    const v = Math.min(320, 80 + 420 * (G.time - sl.at)), zp = P.z0 + (P.x1 - a.x) * Math.tan(P.th);
+    a.vx = -v; a.vy *= .5; a.hitPushX = a.hitPushY = 0; a.bioZ = zp; a.bioVz = 0; a.bioAir = false; a.bioSurface = null;
+   }
+  }
+  return out;
+ };
  const map = BioSandtown280, build0 = map.build;
  map.build = function(w, wall){
   const out = build0.apply(this, arguments);
@@ -20882,41 +20900,69 @@ const ST392 = (()=>{
  // 美术：铰链在城楼一侧（x1152）。放下时是木桥面；收起时绕铰链立起来，画成倒向城楼的木板墙 + 两条铁链
  const draw0 = map.draw;
  const plank = (c, pts, a) => {c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.fillStyle = a; c.fill();};
+ // 当前吊桥姿态：th 为绕铰链(x1152, z96)立起的角度；xe/ze 是活动端的 x 与高度
+ function pose(){
+  const raised = world?.arena?.id === ID && st.raised, p = raised ? Math.min(1, (G.time - st.raisedAt) / LIFT) : 0;
+  const th = p * p * (3 - 2 * p) * Math.PI / 2 * .88, x1 = BR.x + BR.w, L = BR.w, z0 = BR.bioH;
+  return {raised, p, th, x1, z0, xe: x1 - L * Math.cos(th), ze: z0 + L * Math.sin(th), y0: BR.y, y1: BR.y + BR.h};
+ }
+ function paintBridge(c, S, P){
+  const {raised, p, x1, z0, xe, ze, y0, y1} = P;
+  if(raised && p >= 1){
+   // 立起来的桥面（略向瓮城台一侧倾斜）：正面木板 + 厚边 + 横向板缝
+   const top = ze * S, base = z0 * S;
+   plank(c, [[xe, y0 - top], [x1, y0 - base], [x1, y1 - base], [xe, y1 - top]], '#8b5f35');
+   c.fillStyle = 'rgba(255,220,170,.18)'; for(let i = 1; i < 10; i++){const k = i / 10; c.fillRect(xe + (x1 - xe) * k - 1, y0 - top + (top - base) * k, 2, BR.h);}
+   plank(c, [[xe - 8, y0 - top], [xe, y0 - top], [xe, y1 - top], [xe - 8, y1 - top]], '#5a3a1e');
+   c.strokeStyle = '#3e2412'; c.lineWidth = 3; c.beginPath(); c.moveTo(xe, y0 - top); c.lineTo(x1, y0 - base); c.lineTo(x1, y1 - base); c.lineTo(xe, y1 - top); c.closePath(); c.stroke();
+  }else{
+   plank(c, [[xe, y0 - ze * S], [x1, y0 - z0 * S], [x1, y1 - z0 * S], [xe, y1 - ze * S]], '#93673d');
+   c.fillStyle = 'rgba(255,220,170,.22)'; const n = 12;
+   for(let i = 1; i < n; i++){const k = i / n, xx = xe + (x1 - xe) * k, zz = ze + (z0 - ze) * k; c.fillRect(xx, y0 - zz * S + 4, 1.5, BR.h - 8);}
+   c.fillStyle = '#5a3a1e'; for(const yy of [y0 + 6, y1 - 9]){c.beginPath(); c.moveTo(xe, yy - ze * S); c.lineTo(x1, yy - z0 * S); c.lineTo(x1, yy - z0 * S + 3); c.lineTo(xe, yy - ze * S + 3); c.closePath(); c.fill();}
+  }
+  // 铁链：城楼门楼 → 桥头
+  c.strokeStyle = 'rgba(48,40,34,.9)'; c.lineWidth = 2.5; c.setLineDash([4, 3]);
+  for(const yy of [y0 + 8, y1 - 8]){c.beginPath(); c.moveTo(x1 + 10, yy - (z0 + 96) * S); c.lineTo(xe, yy - ze * S); c.stroke();}
+  c.setLineDash([]);
+ }
  map.draw = function(c, w, overview = false, forceOblique = null){
   const out = draw0.apply(this, arguments);
   if(w?.arena?.id !== ID) return out;
   try{
    const ov = overview || !!(c.getTransform && Math.abs(c.getTransform().a) < .6);
    const QA = window.BioQuarantineArt, ob = forceOblique != null ? forceOblique : QA ? QA.isOblique(w, ov) : false;
-   const S = ob ? (QA ? QA.SHIFT : .35 / .82) : 0;
-   const raised = w?.arena?.id === ID && st.raised, p = raised ? Math.min(1, (G.time - st.raisedAt) / LIFT) : 0;
-   const th = p * p * (3 - 2 * p) * Math.PI / 2 * .88, x1 = BR.x + BR.w, L = BR.w, z0 = BR.bioH;
-   const xe = x1 - L * Math.cos(th), ze = z0 + L * Math.sin(th), y0 = BR.y, y1 = BR.y + BR.h;
+   const S = ob ? (QA ? QA.SHIFT : .35 / .82) : 0, P = pose();
    c.save();
-   if(!raised && S > 0){c.fillStyle = 'rgba(66,36,12,.22)'; c.fillRect(BR.x + 10, y0 + 16, BR.w - 16, BR.h);}
-   if(raised && p >= 1){
-    // 立起来的桥：铰链处一道厚木板墙
-    // 立起来的桥面（略向瓮城台一侧倾斜）：正面木板 + 厚边 + 横向板缝
-    const top = ze * S, base = z0 * S;
-    plank(c, [[xe, y0 - top], [x1, y0 - base], [x1, y1 - base], [xe, y1 - top]], '#8b5f35');
-    c.fillStyle = 'rgba(255,220,170,.18)'; for(let i = 1; i < 10; i++){const k = i / 10; c.fillRect(xe + (x1 - xe) * k - 1, y0 - top + (top - base) * k, 2, BR.h);}
-    plank(c, [[xe - 8, y0 - top], [xe, y0 - top], [xe, y1 - top], [xe - 8, y1 - top]], '#5a3a1e');
-    c.strokeStyle = '#3e2412'; c.lineWidth = 3; c.beginPath(); c.moveTo(xe, y0 - top); c.lineTo(x1, y0 - base); c.lineTo(x1, y1 - base); c.lineTo(xe, y1 - top); c.closePath(); c.stroke();
-   }else{
-    plank(c, [[xe, y0 - ze * S], [x1, y0 - z0 * S], [x1, y1 - z0 * S], [xe, y1 - ze * S]], '#93673d');
-    c.fillStyle = 'rgba(255,220,170,.22)'; const n = 12;
-    for(let i = 1; i < n; i++){const k = i / n, xx = xe + (x1 - xe) * k, zz = ze + (z0 - ze) * k; c.fillRect(xx, y0 - zz * S + 4, 1.5, BR.h - 8);}
-    c.fillStyle = '#5a3a1e'; for(const yy of [y0 + 6, y1 - 9]){c.beginPath(); c.moveTo(xe, yy - ze * S); c.lineTo(x1, yy - z0 * S); c.lineTo(x1, yy - z0 * S + 3); c.lineTo(xe, yy - ze * S + 3); c.closePath(); c.fill();}
-   }
-   // 铁链：城楼门楼 → 桥头
-   c.strokeStyle = 'rgba(48,40,34,.9)'; c.lineWidth = 2.5; c.setLineDash([4, 3]);
-   for(const yy of [y0 + 8, y1 - 8]){c.beginPath(); c.moveTo(x1 + 10, yy - (z0 + 96) * S); c.lineTo(xe, yy - ze * S); c.stroke();}
-   c.setLineDash([]);
+   if(!P.raised && S > 0){c.fillStyle = 'rgba(66,36,12,.22)'; c.fillRect(BR.x + 10, P.y0 + 16, BR.w - 16, BR.h);}
+   paintBridge(c, S, P);
    c.restore();
   }catch(e){}
   return out;
  };
- return {stats: C.stats, ctl: C, state: st, raise, lower, link: LINK, bridge: BR, delay: DELAY};
+ // 3.9.5 斜视遮挡：吊桥是建图后另画的（不在烘焙的结构表里），原来角色永远压在桥上——
+ // 桥下（瓮城台与城楼之间的地面凹口）走动的人、桥收起时掉下去的人、站在立起桥板后面的人都画在了桥板上面（穿模）。
+ // 现在角色画完后，凡是身体低于桥板且与桥板在画面上重叠的，把桥板按角色包围盒裁剪后半透明回绘，与全图其它结构的遮挡规则一致。
+ const occ0 = map.occlude;
+ map.occlude = function(c, actors){
+  const out = occ0.apply(this, arguments);
+  const w = world; if(w?.arena?.id !== ID || !window.BioQuarantineArt?.isOblique(w, false) || !window.Occlusion281) return out;
+  try{
+   const S = BioQuarantineArt.SHIFT, P = pose(), tn = Math.tan(P.th);
+   for(const a of actors){
+    if(!a.alive || a.mode !== 'ground' || a.bioSurface === BR.sid) continue;
+    const z = BioPlatforms.height(a), r = a.r || 17;
+    if(a.x < Math.min(P.xe, BR.x) - 8 - r || a.x > P.x1 + 2 || a.y < P.y0 - 8 || a.y >= P.y1 + 4) continue;
+    // 该处桥板底面高度：放下时 96；立起时随离铰链的距离升高（活动端最高）
+    const xx = clamp(a.x, P.xe, P.x1), under = P.z0 + (P.x1 - xx) * tn - (P.raised ? 0 : BR.slab);
+    if(z + 30 > under) continue;
+    const lift = z * S, box = {x0: a.x - 30, y0: a.y - lift - 36, x1: a.x + 30, y1: a.y - lift + 24};
+    Occlusion281.composite(c, box, g => g.rect(box.x0, box.y0, box.x1 - box.x0, box.y1 - box.y0), g => paintBridge(g, S, P), a === G.player ? .5 : .76);
+   }
+  }catch(e){}
+  return out;
+ };
+ return {stats: C.stats, ctl: C, state: st, raise, lower, link: LINK, bridge: BR, delay: DELAY, pose};
 })();
 if(typeof window !== 'undefined') window.ST392 = ST392;
 
@@ -20940,8 +20986,31 @@ const Climb393 = function(cfg){
   a.climb393 = null; a.x = LINK.b.x; a.y = LINK.b.y; a.bioZ = cfg.z1; a.bioVz = 0; a.bioAir = false; a.bioSurface = LINK.to; stats.done++;
   if(a.ai){a.ai.path = null; a.ai.goal = null; a.ai.bioEdge = null;}
  }
+ // 3.9.5：爬梯位置随进度连续变化（3.9.3/3.9.4 是贴在梯脚只抬高度、到 1.6/2 s 时一帧瞬移到梯顶，斜视画面里跳 64/40 px）。
+ // 两段、画面上匀速：① 一边升高 z0→z1 一边贴近立面（身体不进目标台面范围，碰撞允许）；② 到顶后翻过台沿走到梯顶点。
+ // 两段按画面位移（水平位移 + 高度×斜视系数）分配时间，所以整个过程画面速度恒定、没有跳变；总时长 cfg.T 不变。
+ let geo395 = null;
+ function climbGeo(r){
+  if(geo395 && geo395.r === r && geo395.w === world) return geo395;
+  const t = world.arena.platforms.find(p => p.sid === LINK.to), L = UL, S = window.BioQuarantineArt ? BioQuarantineArt.SHIFT : .35 / .82;
+  let d1 = L;
+  if(t) for(let d = 0; d <= L; d += 1){const x = LINK.a.x + ux / UL * d, y = LINK.a.y + uy / UL * d; if(x > t.x - r && x < t.x + t.w + r && y > t.y - r && y < t.y + t.h + r){d1 = Math.max(0, d - 1); break;}}
+  const h = Math.abs(cfg.z1 - cfg.z0) * S, kA = (d1 + h) / (L + h || 1);
+  return geo395 = {r, w: world, d1, L, kA};
+ }
+ const pos = (k, a) => {
+  const g = climbGeo((a?.r || 17) + 1), nx = ux / UL, ny = uy / UL;
+  if(k < g.kA){const f = k / g.kA; return {x: LINK.a.x + nx * g.d1 * f, y: LINK.a.y + ny * g.d1 * f, z: cfg.z0 + (cfg.z1 - cfg.z0) * f};}
+  const f = (k - g.kA) / (1 - g.kA || 1), d = g.d1 + (g.L - g.d1) * f; return {x: LINK.a.x + nx * d, y: LINK.a.y + ny * d, z: cfg.z1};
+ };
+ // 被打下梯子时如果身体已经伸进目标台面的范围（高度还没到台面），沿梯子退回到台面边缘外再摔下去
+ function clearOfTarget(a){
+  const t = world.arena.platforms.find(p => p.sid === LINK.to), r = (a.r || 17) + 1; if(!t) return;
+  const inside = () => a.x > t.x - r && a.x < t.x + t.w + r && a.y > t.y - r && a.y < t.y + t.h + r;
+  for(let i = 0; i < 80 && inside(); i++){a.x -= ux / UL * 2; a.y -= uy / UL * 2;}
+ }
  function knock(a){
-  const c = a.climb393; if(!c) return; a.climb393 = null; stats.knocked++;
+  const c = a.climb393; if(!c) return; a.climb393 = null; stats.knocked++; clearOfTarget(a);
   a.bioAir = true; a.bioVz = 60; a.bioSurface = null; a.hitPushX = -ux / UL * 150; a.hitPushY = -uy / UL * 150; a.bioAirHitUntil = G.time + .6;
   if(a.ai){a.ai.path = null; a.ai.goal = null; a.ai.bioEdge = null;}
  }
@@ -20966,11 +21035,11 @@ const Climb393 = function(cfg){
    if(!on() || !a.alive){a.climb393 = null; return out;}
    const k = (G.time - c.t0) / cfg.T;
    if(k >= 1) finish(a);
-   else{a.x = LINK.a.x; a.y = LINK.a.y; a.vx = a.vy = 0; a.bioZ = cfg.z0 + (cfg.z1 - cfg.z0) * k; a.bioVz = 0; a.bioAir = false; a.bioSurface = null;}
+   else{const p = pos(k, a); a.x = p.x; a.y = p.y; a.vx = a.vy = 0; a.bioZ = p.z; a.bioVz = 0; a.bioAir = false; a.bioSurface = null;}
   }
   return out;
  };
- const api = {stats, start, knock, hit, route, link: LINK, cfg, busy};
+ const api = {stats, start, knock, hit, route, link: LINK, cfg, busy, pos};
  LINK.ctl393 = api;
  return api;
 };
@@ -21090,25 +21159,86 @@ const OBS394 = (()=>{
   w.arena.obs394 = 1; st.state = 'down'; st.h = Z0; st.round = null; st.tickT = -1; st.departAt = null;
   return out;
  };
- // 美术：升降台台面（随高度抬升）+ 四角导轨 + 南侧爬梯式导轨
+ // 美术（3.9.5 重画，只改外观）：工业货梯平台——升降井四角钢立柱 + 顶部横梁滑轮与吊链 + 北侧配重块（与台面反向运动），
+ // 台下两节剪叉支架随高度伸展；台面是金属格栅、黄黑警示条边框、四角护栏（南侧上台口和东侧通舱顶口留空）；
+ // 西北角指示灯：待机黄、开动（站上倒计时与上升中）闪烁、到顶绿；南立面贴「升降台」小标牌。南侧爬梯式导轨照旧。
  const draw0 = map.draw;
  map.draw = function(c, w, overview = false){
   const out = draw0.apply(this, arguments);
   if(w?.arena?.id !== ID) return out;
   try{
    const QA = window.BioQuarantineArt, ob = QA ? QA.isOblique(w, overview) : false, S = ob ? QA.SHIFT : 0;
-   const h = w.arena.obs394 ? st.h : Z0, {x, y, w: lw, h: lh} = LIFT, y1 = y + lh, lift = h * S, base = Z0 * S, rail = (Z1 + 34) * S;
+   const live = !!w.arena.obs394, h = live ? st.h : Z0, {x, y, w: lw, h: lh} = LIFT, y1 = y + lh, lift = h * S, base = Z0 * S, head = (Z1 + 40) * S;
+   const T = typeof renderT === 'number' ? renderT : (G.time || 0);
+   const mode = !live ? 'down' : st.state === 'up' ? 'up' : st.state === 'rising' || st.departAt != null ? 'go' : 'down';
    c.save();
-   // 导轨
-   c.strokeStyle = '#59636b'; c.lineWidth = 4;
-   for(const xx of [x + 4, x + lw - 4]){c.beginPath(); c.moveTo(xx, y1 - base); c.lineTo(xx, y1 - rail); c.stroke(); c.beginPath(); c.moveTo(xx, y + 4 - base); c.lineTo(xx, y + 4 - rail); c.stroke();}
-   // 南侧爬梯横档
-   c.strokeStyle = 'rgba(205,170,70,.85)'; c.lineWidth = 2; for(let zz = Z0 + 12; zz <= Z1; zz += 12){c.beginPath(); c.moveTo(x + 4, y1 - zz * S); c.lineTo(x + lw - 4, y1 - zz * S); c.stroke();}
-   // 台体侧面 + 台面
-   if(S > 0){c.fillStyle = '#4a545b'; c.fillRect(x, y1 - lift, lw, Math.max(4, lift - base));}
-   c.fillStyle = '#9aa6ae'; c.fillRect(x, y - lift, lw, lh);
-   c.strokeStyle = '#d9b84a'; c.lineWidth = 3; c.setLineDash([8, 6]); c.strokeRect(x + 3, y - lift + 3, lw - 6, lh - 6); c.setLineDash([]);
-   c.fillStyle = 'rgba(30,36,40,.5)'; for(let yy = y + 10; yy < y1 - 6; yy += 12) c.fillRect(x + 8, yy - lift, lw - 16, 2);
+   if(!overview){
+    // 升降井：四角钢立柱（工字钢：亮面 + 暗边）
+    const post = (xx, yy) => {c.fillStyle = '#3c454c'; c.fillRect(xx - 3, yy - head, 6, head - base); c.fillStyle = '#7b868e'; c.fillRect(xx - 1, yy - head, 2, head - base);};
+    post(x + 3, y + 3); post(x + lw - 3, y + 3);
+    // 顶部横梁 + 两个滑轮
+    c.fillStyle = '#2f373d'; c.fillRect(x - 2, y + 1 - head - 5, lw + 4, 7); c.fillRect(x - 2, y1 - 3 - head - 5, lw + 4, 7);
+    for(const xx of [x + 18, x + lw - 18]){c.fillStyle = '#596670'; c.beginPath(); c.arc(xx, y + 2 - head - 1, 5, 0, Math.PI * 2); c.fill(); c.fillStyle = '#20262a'; c.beginPath(); c.arc(xx, y + 2 - head - 1, 1.8, 0, Math.PI * 2); c.fill();}
+    // 配重块：贴北侧立柱，台面越高配重越低
+    const cwz = Z1 + Z0 - h + 20, cwy = y + 4 - cwz * S;
+    c.fillStyle = '#4b3b2a'; c.fillRect(x + lw / 2 - 11, cwy - 10, 22, 16); c.fillStyle = 'rgba(255,200,80,.55)'; c.fillRect(x + lw / 2 - 11, cwy - 10, 22, 3);
+    // 吊链：滑轮 → 台面北沿 / 滑轮 → 配重
+    c.strokeStyle = 'rgba(30,30,28,.9)'; c.lineWidth = 2; c.setLineDash([3, 2]);
+    for(const xx of [x + 18, x + lw - 18]){c.beginPath(); c.moveTo(xx, y + 2 - head + 3); c.lineTo(xx, y + 6 - lift); c.stroke();}
+    c.beginPath(); c.moveTo(x + lw / 2, y + 2 - head + 2); c.lineTo(x + lw / 2, cwy - 10); c.stroke(); c.setLineDash([]);
+    // 南侧爬梯式导轨（升降井南面，3.9.4 起的唯一后备上法）
+    c.strokeStyle = '#59636b'; c.lineWidth = 4;
+    for(const xx of [x + 4, x + lw - 4]){c.beginPath(); c.moveTo(xx, y1 - base); c.lineTo(xx, y1 - head); c.stroke();}
+    c.strokeStyle = 'rgba(205,170,70,.85)'; c.lineWidth = 2; for(let zz = Z0 + 12; zz <= Z1 + 30; zz += 12){c.beginPath(); c.moveTo(x + 4, y1 - zz * S); c.lineTo(x + lw - 4, y1 - zz * S); c.stroke();}
+    // 剪叉支架：底座 → 台面底，两节 X 形钢臂随高度伸展
+    if(S > 0){
+     const slab = 10 * S, top = y1 - lift + slab, bot = y1 - base, span = Math.max(0, bot - top);
+     c.fillStyle = '#2b3236'; c.fillRect(x + 2, bot - 3, lw - 4, 4);
+     if(span > 1){
+      const n = 2, st0 = span / n, xl = x + 9, xr = x + lw - 9;
+      for(const [col, off] of [['#5b4a1c', -1.5], ['#e2b13a', 0]]){
+       c.strokeStyle = col; c.lineWidth = off ? 4.5 : 3;
+       for(let i = 0; i < n; i++){const ya = bot - st0 * i + off, yb = bot - st0 * (i + 1) + off; c.beginPath(); c.moveTo(xl, ya); c.lineTo(xr, yb); c.moveTo(xr, ya); c.lineTo(xl, yb); c.stroke();}
+      }
+      c.fillStyle = '#2b3236'; for(let i = 0; i <= 2; i++){const yy = bot - st0 * i; for(const xx of [xl, xr]){c.beginPath(); c.arc(xx, yy, 2.2, 0, Math.PI * 2); c.fill();} c.beginPath(); c.arc((xl + xr) / 2, yy - st0 / 2, 2.2, 0, Math.PI * 2); if(i < 2) c.fill();}
+     }
+     // 台面厚度（侧边钢板）
+     c.fillStyle = '#4a545b'; c.fillRect(x, y1 - lift, lw, Math.max(3, slab)); c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(x, y1 - lift + Math.max(3, slab) - 1, lw, 1);
+    }
+   }
+   // 台面：金属格栅 + 黄黑警示条边框
+   const ty = y - lift;
+   if(h <= Z0 + .5 && !overview){c.fillStyle = 'rgba(10,12,14,.55)'; c.fillRect(x - 2, ty - 2, lw + 4, lh + 4);} // 待机：嵌在天台地面里的井口
+   c.fillStyle = '#7f8a92'; c.fillRect(x, ty, lw, lh);
+   c.save(); c.beginPath(); c.rect(x + 7, ty + 7, lw - 14, lh - 14); c.clip();
+   c.fillStyle = '#5d676e'; c.fillRect(x + 7, ty + 7, lw - 14, lh - 14);
+   c.strokeStyle = 'rgba(190,200,206,.75)'; c.lineWidth = 1;
+   for(let xx = x + 7; xx <= x + lw - 7; xx += 5){c.beginPath(); c.moveTo(xx + .5, ty + 7); c.lineTo(xx + .5, ty + lh - 7); c.stroke();}
+   for(let yy = ty + 7; yy <= ty + lh - 7; yy += 5){c.beginPath(); c.moveTo(x + 7, yy + .5); c.lineTo(x + lw - 7, yy + .5); c.stroke();}
+   c.restore();
+   c.save(); c.beginPath(); c.rect(x, ty, lw, lh); c.rect(x + 6, ty + 6, lw - 12, lh - 12); c.clip('evenodd');
+   c.fillStyle = '#f0c419'; c.fillRect(x, ty, lw, lh); c.strokeStyle = '#1d1f20'; c.lineWidth = 3.2;
+   for(let k = -lh; k < lw + lh; k += 9){c.beginPath(); c.moveTo(x + k, ty - 1); c.lineTo(x + k + lh + 2, ty + lh + 1); c.stroke();}
+   c.restore();
+   c.strokeStyle = '#2b3236'; c.lineWidth = 1.5; c.strokeRect(x + .5, ty + .5, lw - 1, lh - 1);
+   if(!overview){
+    // 四角护栏（立柱 + 扶手）；南侧上台口、东侧通舱顶口留空
+    const rz = 22 * S, cx0 = x + 3, cx1 = x + lw - 3, cy0 = ty + 3, cy1 = ty + lh - 3;
+    c.strokeStyle = '#f2c64a'; c.lineWidth = 2.4;
+    const rail = (ax, ay, bx, by) => {c.beginPath(); c.moveTo(ax, ay - rz); c.lineTo(bx, by - rz); c.stroke();};
+    rail(cx0, cy0, cx1, cy0); rail(cx0, cy0, cx0, cy1); rail(cx0, cy1, cx0 + 14, cy1); rail(cx1 - 14, cy1, cx1, cy1); rail(cx1, cy0, cx1, cy0 + 14); rail(cx1, cy1 - 14, cx1, cy1);
+    c.strokeStyle = '#3a3f42'; c.lineWidth = 2.6; for(const [px, py] of [[cx0, cy0], [cx1, cy0], [cx0, cy1], [cx1, cy1]]){c.beginPath(); c.moveTo(px, py); c.lineTo(px, py - rz - 1); c.stroke();}
+    // 指示灯（西北角立柱顶）：待机黄、开动闪烁、到顶绿
+    const on = mode === 'go' ? (Math.floor(T * 4) % 2 === 0) : true, col = mode === 'up' ? '#4dff7a' : '#ffd23a';
+    const lx = cx0, ly = cy0 - rz - 4;
+    c.fillStyle = '#1b1f22'; c.beginPath(); c.arc(lx, ly, 4.6, 0, Math.PI * 2); c.fill();
+    if(on){c.fillStyle = col; c.globalAlpha = .35; c.beginPath(); c.arc(lx, ly, 9, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1; c.beginPath(); c.arc(lx, ly, 3.4, 0, Math.PI * 2); c.fill();}
+    else{c.fillStyle = '#5a4a14'; c.beginPath(); c.arc(lx, ly, 3.4, 0, Math.PI * 2); c.fill();}
+    // 「升降台」标牌：南立面（待机时贴在台面南沿内侧）
+    const py = S > 0 && h > Z0 + 6 ? y1 - lift + Math.max(3, 10 * S) + 9 : ty + lh - 16;
+    c.fillStyle = 'rgba(24,28,30,.88)'; c.fillRect(x + lw / 2 - 19, py - 7, 38, 13);
+    c.fillStyle = '#ffe28a'; c.font = 'bold 9px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('升降台', x + lw / 2, py);
+   }
    if(overview){c.font = 'bold 72px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff1cf'; c.fillText('G', TOP.x + TOP.w / 2, TOP.y + TOP.h / 2);}
    c.restore();
   }catch(e){}
@@ -21137,7 +21267,7 @@ const FROSTCITY320 = (()=>{
  const drop = (from, a, b) => ({from, to: null, a, b, jump: false});
  const FROST_RAMP = {top:'#aab4bd', face:'#5d6872', joint:'rgba(24,32,44,.45)', step:'rgba(30,40,52,.5)', hi:'rgba(240,246,252,.55)', edge:'rgba(22,30,40,.75)', warn:'rgba(222,178,64,.8)', speck:['rgba(30,40,52,.25)', 'rgba(250,252,255,.45)']};
  const SPEC = {
-  id: ID, name: '雾城变电区', version: 'frostcity-3.9.0', size: 3200, theme: 'snow',
+  id: ID, name: '雾城变电区', version: 'frostcity-3.9.5', size: 3200, theme: 'snow',
   description: '雪夜城区（3.2.1 单入口）：每个人类据点只有一条上去的路——中央变电站只走南坡道上 96 下层，再从内部跳上 144/192；A 钟楼窄坡道、B 铁笼低门、D 站台南侧单货箱、E 楼顶东侧货箱；F 路口信号灯龙门架（3.9.0）只能从西侧公寓二楼外廊尽头助跑跳上，僵尸上不去。',
   bounds: {x: 96, y: 96, w: 3008, h: 3008},
   platforms: [
@@ -21198,8 +21328,9 @@ const FROSTCITY320 = (()=>{
    {id: P + 'ne_shed', x: 2960, y: 768, w: 112, h: 256, H: 180, art: 'shed'},
    // 西部：公寓楼、停着的公交车
    {id: P + 'w_apt1', x: 160, y: 1344, w: 320, h: 320, H: 280, art: 'plant'},
-   // 3.9.0：西南小楼压低、向南让出 32，避免斜视下挡住北侧的室外楼梯
-   {id: P + 'w_apt2', x: 224, y: 1744, w: 224, h: 224, H: 160, art: 'plant'},
+   // 3.9.0：西南小楼压低、向南让出，避免斜视下挡住北侧的室外楼梯。
+   // 3.9.5：让出的缝从 32 加到 56（≥ 身体直径 + 余量）：原来 32 宽的缝比僵尸身体还窄，从楼梯南沿被击退掉进去的人卡在缝里没有寻路节点（站桩）
+   {id: P + 'w_apt2', x: 224, y: 1768, w: 224, h: 200, H: 160, art: 'plant'},
    // 3.2.1：公交站棚、报亭改为不可站立的装饰（取消低矮据点）
    {id: P + 'w_shelter', x: 640, y: 1456, w: 176, h: 80, H: 150, art: 'shed'},
    {id: P + 'n_kiosk', x: 1440, y: 720, w: 128, h: 96, H: 150, art: 'shed'},
