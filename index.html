@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0c1b24">
-<title>终局之岛 · 玩法重制版 3.8.13 · 战地规则</title>
+<title>终局之岛 · 玩法重制版 3.9.4 · 战地规则</title>
 <style>
 :root{
   --ink:#0c1b24;--ink2:#132a36;--ink3:#1d3b4a;--paper:#eef2ec;--muted:#8fa5a6;--signal:#ffc93c;--storm:#957bff;--danger:#ff5446;--ok:#6fdc8c;
@@ -650,7 +650,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="menu">
   <canvas id="menuMap"></canvas>
   <div class="mpanel">
-    <h1 class="title"><small>LAST ISLE · 3.8.13</small>终局之岛</h1>
+    <h1 class="title"><small>LAST ISLE · 3.9.4</small>终局之岛</h1>
     <p class="tagline" id="tagline">五十人空降一座孤岛。毒圈收紧，物资有限，只有一个人能离开。</p>
     <div class="islandinfo" id="islandinfo">正在生成岛屿…</div>
     <div id="modePicker" class="mode-picker"><button data-mode="br">大逃杀</button><button data-mode="battlefield">战场行动</button><button data-mode="tdm">团队竞技</button><button data-mode="infection">生化模式</button></div>
@@ -671,7 +671,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
       <button id="btnHelp">操作说明</button>
       <button id="btnCareer">生涯战绩</button>
     </div>
-    <p class="mfoot">玩法重制版 3.8.13 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
+    <p class="mfoot">玩法重制版 3.9.4 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
   </div>
 </div>
 
@@ -817,7 +817,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="fps" class="hidden"></div>
 
 <div id="loadoutPanel" class="modal hidden"><div class="sheet">
-<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.8.13</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
+<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.9.4</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
 <div class="armory-layout">
 <aside class="armory-loadout" aria-label="保存的背包">
 <h3 class="armory-section-title">我的配装 <small>保存在此设备</small></h3>
@@ -4751,6 +4751,10 @@ function damageActor(t, amt, src, wid, o = {}) {
     const push=Math.hypot(t.hitPushX,t.hitPushY);if(push>80){t.hitPushX*=80/push;t.hitPushY*=80/push;}
     }
   }
+  // 3.9.1 雾城 F：外廊飞扑的僵尸在空中中弹 → 击退掉下去
+  if (o.bullet && t.zombie && t.pounce391) {const C392 = t.pounce391.ctl || (typeof FC390 !== 'undefined' ? FC390 : null); if (C392) C392.zombieAirHit(t);}
+  // 3.9.3 检修梯：爬梯的僵尸吃够子弹伤害就被打下来
+  if (o.bullet && t.zombie && t.climb393) t.climb393.ctl.hit(t, dmg);
   if (src && src !== t) { src.dmg += dmg; t.lastHitBy = src; t.lastHitT = G.time; }
   if (t.ai) aiOnHurt(t, src);
   if (t === G.player) {
@@ -11374,7 +11378,7 @@ const BioPlatforms = {
     const from=a.bioSurface||null,to=this.targetSurface(t);if(from===to)return [];
     const edges=world.arena.links,crowded=WaterplantCrowd274.active(),waterplant=world.arena.id==='bio_waterplant',queue=[{id:from,cost:0,path:[]}],best=new Map([[from,0]]);
     while(queue.length){queue.sort((a,b)=>a.cost-b.cost);const item=queue.shift();if(item.id===to)return crowded?item.path.map(e=>WaterplantCrowd274.edge(a,e)):item.path;
-      for(const e of edges)if(e.from===item.id&&!(waterplant&&a.ai&&to===null&&e.from==='wp_a'&&e.to==='wp_a_lane')){const last=item.path.length?item.path[item.path.length-1].b:a;
+      for(const e of edges)if(e.from===item.id&&!(e.humanOnly&&a.zombie)&&!(waterplant&&a.ai&&to===null&&e.from==='wp_a'&&e.to==='wp_a_lane')){const last=item.path.length?item.path[item.path.length-1].b:a;
         const cost=item.cost+dist(last.x,last.y,e.a.x,e.a.y)+dist(e.a.x,e.a.y,e.b.x,e.b.y)+((a.zombie&&item.path.length===0&&e.branch!=null&&e.branch!==(a.modeIndex%2))?180:0)+(crowded&&a.ai&&e.from===null&&['wp_a_entry','wp_a_east_box'].includes(e.to)&&((a.wpRouteLane274||0)>0)!==(e.to==='wp_a_east_box')?320:0);
         if(cost<(best.get(e.to)??Infinity)){best.set(e.to,cost);queue.push({id:e.to,cost,path:[...item.path,e]});}}
     }return null;
@@ -11664,7 +11668,14 @@ const BioPlatforms = {
       if(dist2(a.x,a.y,t.x,t.y)<16**2||arriveHold380(a,t,dist(a.x,a.y,t.x,t.y)))return [0,0];
       return a.bioSurface?BioDeck279.move(a,t):aiGoto(a,t.x,t.y);
     }
-    edge=route[0];const waiting=this.approach(a,edge);if(waiting)return waiting;if(a.bioSurface==='b_walk')this.passage(a,edge);const d=dist(a.x,a.y,edge.a.x,edge.a.y);
+    edge=route[0];
+    // 3.9.3 检修梯：攀爬过程交给 Climb393
+    if(edge.ctl393&&(a.bioSurface||null)===(edge.from||null)){const r=edge.ctl393.route(a,edge);if(r)return r;}
+    // 3.9.4 天文舱升降台：没升到顶之前站在台上等
+    if(edge.ctl394&&a.bioSurface===edge.from){const r=edge.ctl394.route(a,edge);if(r)return r;}
+    // 3.9.0/3.9.1: authored run-up jumps (雾城 F 信号灯架) own their whole approach: run-up, edge timing, NPC skill roll; zombies sprint and pounce (3.9.1).
+    if(edge.runup390&&a.bioSurface===edge.from&&(edge.ctl392||typeof FC390!=='undefined')){const C392=edge.ctl392||FC390,r=a.zombie?C392.zombieJump(a,edge):C392.npcJump(a,edge);if(r==='jump'){ai.bioEdge=edge;ai.bioEdgeAt=G.time;ai.path=null;ai.goal=null;this.jump(a);const L=dist(edge.a.x,edge.a.y,edge.b.x,edge.b.y)||1;return [(edge.b.x-edge.a.x)/L,(edge.b.y-edge.a.y)/L];}if(r)return r;}
+    const waiting=this.approach(a,edge);if(waiting)return waiting;if(a.bioSurface==='b_walk')this.passage(a,edge);const d=dist(a.x,a.y,edge.a.x,edge.a.y);
     if(d>(a.bioSurface?23:14))return a.bioSurface?BioDeck279.move(a,edge.a):aiGoto(a,edge.a.x,edge.a.y);
     if(!this.passage(a,edge)){const wait=this.laneWaitMove(a,edge);if(wait)return wait;ai.bioYieldUntil=G.time+.15;return [0,0];}
     if(edge.from==='a_step'&&edge.to==='a'&&edge.jump){const len=dist(edge.a.x,edge.a.y,edge.b.x,edge.b.y)||1,ux=(edge.b.x-edge.a.x)/len,uy=(edge.b.y-edge.a.y)/len;
@@ -11711,7 +11722,7 @@ const BioPlatforms = {
       if(!ids.has(e.from)||!ids.has(e.to))errors.push('跳跃连接缺少平台');
       const za=e.from?w.arena.platforms.find(s=>s.sid===e.from).bioH:0,zb=e.to?w.arena.platforms.find(s=>s.sid===e.to).bioH:0;
       const rise=zb-za;if(e.jump&&rise>this.impulse**2/(2*this.gravity))errors.push('跳台过高');
-      if(e.jump){const duration=(this.impulse+Math.sqrt(Math.max(0,this.impulse**2-2*this.gravity*rise)))/this.gravity;if(dist(e.a.x,e.a.y,e.b.x,e.b.y)>195*duration)errors.push('跳台过远');}
+      if(e.jump){const duration=(this.impulse+Math.sqrt(Math.max(0,this.impulse**2-2*this.gravity*rise)))/this.gravity;if(dist(e.a.x,e.a.y,e.b.x,e.b.y)>(e.runup390?240:195)*duration)errors.push('跳台过远');}
       if(!e.from&&!navFree(Math.floor(e.a.x/NC),Math.floor(e.a.y/NC)))errors.push('跳台入口堵塞 '+e.a.x+','+e.a.y);
     }return errors;
   }
@@ -15412,7 +15423,7 @@ BioSpace279.install();
  */
 const BioMapObservatory279 = {
  spec: {
-  id:'bio_observatory279', name:'暮林观测站', version:'observatory-3.3.0', size:3200, theme:'island',
+  id:'bio_observatory279', name:'暮林观测站', version:'observatory-3.9.4', size:3200, theme:'island',
   description:'林间观测楼、设备高台与种子仓三点互保；主路登高，侧向下跳转点，中央补给院暴露在近程交火中。',
   bounds:{x:96,y:96,w:3008,h:3008},
   // Native r17 bodies must recover after a fall between supports. The original
@@ -17043,7 +17054,7 @@ const BioDefense2712 = (()=>{
  };
  BioSpace279.claim=function(a){const p=claimPoint(a);return active(a)&&p?{fort:p.fort,slot:p.slot,point:p}:nativeClaim.call(this,a);};
  const nativePath=P.path,nativeApproach=P.approach,nativePassage=P.passage;
- function edgeVariant(a,e){if(!e.jump||!e.to)return e;const st=state(a),key=[e.from,e.to,e.a.x,e.a.y,e.b.x,e.b.y].join(':');if(st.edges.has(key))return st.edges.get(key);
+ function edgeVariant(a,e){if(!e.jump||!e.to||e.runup390)return e;const st=state(a),key=[e.from,e.to,e.a.x,e.a.y,e.b.x,e.b.y].join(':');if(st.edges.has(key))return st.edges.get(key);
   const dx=e.b.x-e.a.x,dy=e.b.y-e.a.y,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len,source=deck(e.from),dest=deck(e.to);let chosen=e;
   for(let i=0;i<7;i++){const side=(BioTactics.random(a,'jump-lane')*2-1)*26,aa={x:e.a.x+nx*side,y:e.a.y+ny*side},bb={x:e.b.x+nx*side,y:e.b.y+ny*side},za=height(source,aa),zb=height(dest,bb);
    if(source&&!contains(source,aa,(a.r||17)+1)||!contains(dest,bb,(a.r||17)+2))continue;
@@ -17309,7 +17320,8 @@ if(typeof window !== 'undefined') window.BioKit280 = BioKit280;
 // 跳跃冲量 380、重力 900 → 最大起跳高度 ≈ 80；所有登高台阶的高差都 ≤ 56。
 // 登高块要么与上一级台面完全贴合（0 缝），要么留 ≥ 56 的落地缝，杜绝卡人夹缝。
 // 四个据点四种打法：
-//   A 古堡城楼  高144，西侧96高宽坡与80长起跳区，最后48高台坎必须跳上。
+//   A 古堡城楼  高144，西侧96高宽坡 → 96高瓮城台 → 吊桥(96) → 48高台坎跳上。3.9.2：母体出现 8 秒后吊桥收起，
+//               只剩瓮城台助跑飞扑（缺口 151、高差 48，同雾城信号灯架），见 57a_forts392.js。
 //   B 集市水塔  3.3.0 削弱：降为96、台面缩到320×224，南侧单踏箱入口；四个摊位外移到跳跃距离之外。
 //   C 屋顶连桥  入口屋顶 → 40 宽木桥 → 守点屋顶 —— 单列过桥，击退可把僵尸打下桥。
 //   D 驼队货栈  东南低棚(96)单路 —— 兜底点，离补给近。
@@ -17317,12 +17329,14 @@ const SANDTOWN280_SPEC = (()=>{
  const P = 'st_';
  const grid = (xs, ys) => ys.flatMap(y => xs.map(x => ({x, y})));
  return {
-  id:'bio_sandtown', name:'黄沙古镇', version:'sandtown-3.3.0', size:3200, theme:'desert',
+  id:'bio_sandtown', name:'黄沙古镇', version:'sandtown-3.9.2', size:3200, theme:'desert',
   description:'原创沙漠城镇，四个据点都只有一个入口：A 古堡城楼单侧宽坡、坡顶起跳台与48高台坎、B 集市水塔（96 小台）南侧单踏箱、C 屋顶独木桥（桥下可通行）、D 驼队货栈。击退能把僵尸打下坡道和木桥。',
   bounds:{x:96, y:96, w:3008, h:3008},
   platforms:[
    // ---- A 古堡城楼 ----
    {sid:P+'a_deck', x:1152, y:384, w:896, h:352, bioH:144, art:'kasbah', entrance:{y:608,h:112}, label:'A · 古堡城楼'},
+   // 3.9.2 瓮城台：坡顶平台，吊桥收起后从这里助跑飞扑（120 长，足够从坡道限速 170 加速到满速）
+   {sid:P+'a_barb', x:881, y:608, w:120, h:112, bioH:96, art:'kasbah'},
    // ---- B 集市水塔 ----
    {sid:P+'b_deck', x:1440, y:1568, w:320, h:224, bioH:96, art:'scaffold', label:'B · 集市水塔'},
    {sid:P+'b_s',    x:1656, y:1792, w:88,  h:88,  bioH:56,  art:'crate'},
@@ -17344,8 +17358,8 @@ const SANDTOWN280_SPEC = (()=>{
   // impulse380/gravity900 最大升高80.22；48高落点飞行0.690秒，104跨度所需速度151。
   // 112宽通道与台内留空区容纳交会；北侧靠墙、南侧开放，击退仍会掉回内院。
   ramps:[
-   {sid:P+'a_ramp', x:880, y:608, w:272, h:112, rise:96, run:192, dir:'e', narrow:112, speed:170, to:P+'a_deck', jumpToTop:true,
-    entry:{x:832,y:664}, foot:{x:904,y:664}, tip:{x:1104,y:664}, inside:{x:1208,y:664}, art:'ramp'}
+   {sid:P+'a_ramp', x:665, y:608, w:216, h:112, rise:96, run:192, dir:'e', narrow:112, speed:170, to:P+'a_barb',
+    entry:{x:617,y:664}, foot:{x:689,y:664}, tip:{x:865,y:664}, inside:{x:913,y:664}, art:'ramp'}
   ],
   // 架空木桥：桥下可以走人，只有桥面可站立
   overheads:[
@@ -17353,7 +17367,7 @@ const SANDTOWN280_SPEC = (()=>{
   ],
   blocks:[
    // 坡道靠着的城墙（不可攀爬）
-   {id:P+'a_ramp_wall', x:880, y:560, w:272, h:48, H:240, art:'wall'},
+   {id:P+'a_ramp_wall', x:665, y:560, w:487, h:48, H:240, art:'wall'},
    // 城楼台面上的实体（不可站立，挡视线）
    {id:P+'a_tower_w', x:1168, y:400, w:128, h:128, H:304, bioBaseH:144, surfaceId:P+'a_deck', art:'tower'},
    {id:P+'a_tower_e', x:1904, y:400, w:128, h:128, H:304, bioBaseH:144, surfaceId:P+'a_deck', art:'tower'},
@@ -17369,7 +17383,7 @@ const SANDTOWN280_SPEC = (()=>{
    {id:P+'nw_wall1',  x:576, y:224, w:224, h:32,  H:168, art:'ruin'},
    {id:P+'nw_wall2',  x:768, y:256, w:32,  h:208, H:168, art:'ruin'},
    {id:P+'nw_wall3',  x:288, y:512, w:256, h:32,  H:168, art:'ruin'},
-   {id:P+'nw_room',   x:608, y:544, w:160, h:128, H:200, art:'house', roof:1, broken:true},
+   {id:P+'nw_room',   x:608, y:256, w:160, h:128, H:200, art:'house', roof:1, broken:true},
    // 东北 · 驿站马厩
    {id:P+'ne_stable', x:2400, y:192, w:544, h:128, H:200, art:'stable'},
    {id:P+'ne_house',  x:2720, y:416, w:256, h:256, H:240, art:'house', roof:0},
@@ -17405,6 +17419,12 @@ const SANDTOWN280_SPEC = (()=>{
    {id:P+'wagon2', x:2480, y:2816, w:80,  h:176, H:112, art:'wagon'}
   ],
   links:[
+   // A 瓮城台 ↔ 吊桥 ↔ 城楼（吊桥 st_a_bridge 由 57a_forts392.js 建在缺口上；收起后这四条连接摘掉，换成飞扑连接）
+   {from:P+'a_barb', to:P+'a_bridge', a:{x:985,y:664}, b:{x:1017,y:664}, jump:false, bridge392:true},
+   {from:P+'a_bridge', to:P+'a_barb', a:{x:1017,y:664}, b:{x:985,y:664}, jump:false, bridge392:true},
+   {from:P+'a_bridge', to:P+'a_deck', a:{x:1104,y:664}, b:{x:1208,y:664}, jump:true, bridge392:true},
+   {from:P+'a_deck', to:P+'a_bridge', a:{x:1208,y:664}, b:{x:1104,y:664}, jump:false, bridge392:true},
+   {from:P+'a_barb', to:null, a:{x:941,y:712}, b:{x:941,y:800}, jump:false},
    // A 跳下撤离
    {from:P+'a_deck', to:null, a:{x:1344,y:712}, b:{x:1344,y:800}, jump:false},
    {from:P+'a_deck', to:null, a:{x:1856,y:712}, b:{x:1856,y:800}, jump:false},
@@ -17443,7 +17463,7 @@ const SANDTOWN280_SPEC = (()=>{
    })
   ],
   forts:[
-   {name:'A · 古堡城楼', surfaceId:P+'a_deck', x:1600, y:600, floor:0, guard:{x:832,y:664},
+   {name:'A · 古堡城楼', surfaceId:P+'a_deck', x:1600, y:600, floor:0, guard:{x:617,y:664},
     // 坡口到x1232为通行区；分层守位留足转向/刹车空间，远离开放南沿。
     slots:[...grid([1320,1424,1528,1640,1752,1864,1960],[576,664]), ...grid([1360,1464,1736,1840],[440,512])],
     capacity:12, score:.92, escapeCount:3, layout:'kasbah-clear-landing'},
@@ -18172,14 +18192,13 @@ const WATERWORKS281_SPEC = (()=>{
  const P = 'ww_';
  const grid = (xs, ys) => ys.flatMap(y => xs.map(x => ({x, y})));
  return {
-  id:'bio_waterworks', name:'锈蚀水厂', version:'waterworks-3.3.0-rust', size:3200, theme:'island',
-  description:'湿地夜色里的锈蚀水处理厂：A 水塔检修台只能踩箱走贴墙窄检修道单列进入；B 装卸平台两级货箱登台；C 泵房屋顶要踩箱上管墩、再走架空管桥；D 化验室低门铁笼。沉淀池与管廊把庭院切成多条通路。',
+  id:'bio_waterworks', name:'锈蚀水厂', version:'waterworks-3.9.3', size:3200, theme:'island',
+  description:'湿地夜色里的锈蚀水处理厂：A 水塔检修台只能爬管道中段检修梯、再沿单人宽贴墙管道走过去（检修梯一次一人，爬梯的僵尸会被子弹打下来）；B 装卸平台两级货箱登台；C 泵房屋顶要踩箱上管墩、再走架空管桥；D 化验室低门铁笼。沉淀池与管廊把庭院切成多条通路。',
   bounds:{x:96, y:96, w:3008, h:3008},
   platforms:[
-   // ---- A 水塔检修台：踩箱(64) → 贴墙窄检修道(128，单列) → 检修台(128) ----
+   // ---- A 水塔检修台：3.9.3 中段检修梯(地面→128，一次一人、爬 1.6 s) → 单人宽贴墙管道(128) → 检修台(128) ----
    {sid:P+'a_deck',  x:560,  y:448, w:576, h:320, bioH:128, art:'steeldeck', label:'A · 水塔检修台'},
-   {sid:P+'a_lane',  x:288,  y:624, w:272, h:64,  bioH:128, art:'catwalk', narrowSpeed:150},
-   {sid:P+'a_box',   x:208,  y:616, w:80,  h:80,  bioH:64,  art:'crate'},
+   {sid:P+'a_lane',  x:288,  y:624, w:272, h:48,  bioH:128, art:'catwalk', narrowSpeed:150},
    // ---- B 装卸平台：货箱(48) → 货箱(96) → 平台(128) ----
    {sid:P+'b_dock',  x:2176, y:448, w:640, h:352, bioH:128, art:'dock', label:'B · 装卸平台'},
    {sid:P+'b_box2',  x:2176, y:800, w:96,  h:96,  bioH:96,  art:'crate'},
@@ -18233,13 +18252,11 @@ const WATERWORKS281_SPEC = (()=>{
   ],
   links:[
    // A
-   {from:null, to:P+'a_box', a:{x:248,y:752}, b:{x:248,y:672}, jump:true},
-   {from:P+'a_box', to:null, a:{x:248,y:672}, b:{x:248,y:752}, jump:false},
-   {from:P+'a_box', to:P+'a_lane', a:{x:264,y:656}, b:{x:320,y:656}, jump:true},
-   {from:P+'a_lane', to:P+'a_box', a:{x:320,y:656}, b:{x:264,y:656}, jump:false},
-   {from:P+'a_lane', to:P+'a_deck', a:{x:528,y:656}, b:{x:600,y:656}, jump:false},
-   {from:P+'a_deck', to:P+'a_lane', a:{x:600,y:656}, b:{x:528,y:656}, jump:false},
-   {from:P+'a_lane', to:null, a:{x:424,y:680}, b:{x:424,y:768}, jump:false},
+   // 3.9.3 检修梯（57a_forts392.js 的 Climb393 负责爬梯过程）
+   {from:null, to:P+'a_lane', a:{x:424,y:712}, b:{x:424,y:648}, jump:false, ladder393:true},
+   {from:P+'a_lane', to:P+'a_deck', a:{x:528,y:648}, b:{x:600,y:648}, jump:false},
+   {from:P+'a_deck', to:P+'a_lane', a:{x:600,y:648}, b:{x:528,y:648}, jump:false},
+   {from:P+'a_lane', to:null, a:{x:320,y:664}, b:{x:320,y:752}, jump:false},
    {from:P+'a_deck', to:null, a:{x:848,y:744}, b:{x:848,y:832}, jump:false},
    {from:P+'a_deck', to:null, a:{x:1112,y:656}, b:{x:1200,y:656}, jump:false},
    // B
@@ -18264,7 +18281,7 @@ const WATERWORKS281_SPEC = (()=>{
    {from:P+'c_roof', to:null, a:{x:1800,y:1488}, b:{x:1888,y:1488}, jump:false}
   ],
   forts:[
-   {name:'A · 水塔检修台', surfaceId:P+'a_deck', x:848, y:640, floor:0, guard:{x:248,y:752},
+   {name:'A · 水塔检修台', surfaceId:P+'a_deck', x:848, y:640, floor:0, guard:{x:424,y:712},
     slots:[...grid([624,720,816,912,1008,1080],[608,704]), ...grid([768,864],[512])],
     capacity:10, score:.9, escapeCount:2, layout:'wall-lane'},
    {name:'B · 装卸平台', surfaceId:P+'b_dock', x:2496, y:680, floor:0, guard:{x:2032,y:856},
@@ -20686,6 +20703,420 @@ if(typeof window !== 'undefined') window.BF5 = BF5;
 
 
 
+// ---- 57a_forts392.js ----
+// 3.9.2+ 招牌据点。
+// Pounce392(cfg)：把 3.9.1 雾城信号灯架的飞扑规则做成通用控制器，供别的图的「助跑飞扑」连接使用：
+//   满速助跑够得着；起跳前 0.55 s 内中弹 → 起跳速度最多 80%（跳不远）；空中中弹 → 前冲清零、击退掉落；
+//   空中不能再加速；AI 僵尸空中预判 0.22 s 出爪，可在空中感染落点上的人。人类 NPC 按难度掷成功率。
+// 连接带 runup390 + ctl392（指向控制器），18_bio_platforms.routeMove 会把这条连接交给 ctl392。
+// 雾城的 FC390 保持原样（不改它的行为）。
+const Pounce392 = function(cfg){
+ const LINK = cfg.link, TO = LINK.to, FROM = LINK.from, RATE = [.35, .5, .65, .8, .9, .96];
+ const L0 = Math.hypot(LINK.b.x - LINK.a.x, LINK.b.y - LINK.a.y) || 1, ULX = (LINK.b.x - LINK.a.x) / L0, ULY = (LINK.b.y - LINK.a.y) / L0;
+ const stats = {approaches: 0, rolledFail: 0, jumps: 0, success: 0, fail: 0, retries: 0, reroutes: 0, swaps: 0, runups: 0, zApproach: 0, zJumps: 0, zJumpsAll: 0, zLanded: 0, zFell: 0, zAirHits: 0, zRunHits: 0, zAirClaws: 0};
+ const on = () => !!cfg.on();
+ const fortIndex = () => world.arena.forts.findIndex(f => f.surfaceId === (cfg.fortSurface || TO));
+ const moveOf = w => w ? w.def.move : 1.02;
+ const fullSpeed = a => 232 * moveOf(a.wpn) * (a.moveSpeed || 1) * (a.boost > 60 ? 1.07 : 1);
+ const best = a => {let i = a.inv.cur, m = moveOf(a.wpn); for(const k of [0, 1]){const w = a.inv.w[k]; if(w && w.def.move > m + 1e-6){m = w.def.move; i = k;}} return {i, m};};
+ const canTry = a => best(a).m * 232 * (a.moveSpeed || 1) * (cfg.reachK || .7) >= cfg.gap + 2;
+ function clearPlan(a){const ai = a.ai; if(!ai) return; ai.path = null; ai.goal = null; ai.bioEdge = null; ai.bioRunup = null;
+  try{const st = BioDefense2712.state(a); st.anchor = null; st.goal = null; st.next = 0;}catch(e){}
+  try{const hs = BioHumanAI.state(a); hs.goal = null;}catch(e){}}
+ function reroute(a){
+  const forts = world.arena.forts, fi = fortIndex(); let bi = -1, bd = Infinity;
+  for(let i = 0; i < forts.length; i++){const f = forts[i]; if(i === fi) continue;
+   const n = G.actors.filter(o => o !== a && o.alive && !o.zombie && o.fortIndex === i).length; if(n >= (f.capacity || 8)) continue;
+   const d = dist(a.x, a.y, f.x, f.y); if(d < bd){bd = d; bi = i;}}
+  if(bi < 0) return false;
+  a.fortIndex = bi; a.holdSlot = G.actors.filter(o => o !== a && o.alive && !o.zombie && o.fortIndex === bi).length % forts[bi].slots.length;
+  if(a.p392swap && a.inv.w[0]){switchWeapon(a, 0); a.p392swap = false;}
+  if(a.ai) a.ai.p392 = null; clearPlan(a); stats.reroutes++; return true;
+ }
+ const geo = (a, e) => {const dx = e.b.x - e.a.x, dy = e.b.y - e.a.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+  return {ux, uy, along: (e.a.x - a.x) * ux + (e.a.y - a.y) * uy, lat: (a.x - e.a.x) * -uy + (a.y - e.a.y) * ux};};
+ const steerOf = (g, k = .06) => {const sx = g.ux - g.uy * -g.lat * k, sy = g.uy + g.ux * -g.lat * k, n = Math.hypot(sx, sy) || 1; return [sx / n, sy / n];};
+ // 人类 NPC：切到跑得最快的枪、助跑、按难度掷成功率（失手 = 提前起跳，真的掉下去）；够不着就改去别的据点
+ function npcJump(a, e){
+  const ai = a.ai; if(!ai || a.bioAir) return null;
+  const g = geo(a, e); if(g.along > 220) return null;
+  let s = ai.p392;
+  if(!s || s.edge !== e || G.time > s.until || G.time < s.at){
+   if(!canTry(a)){reroute(a); return [0, 0];}
+   s = ai.p392 = {edge: e, at: G.time, until: G.time + 9, roll: Math.random() < (RATE[hLv388()] ?? .65), early: 20 + Math.random() * 28, phase: 'run', runs: 0};
+   stats.approaches++; if(!s.roll) stats.rolledFail++;
+  }
+  const b = best(a); if(b.i !== a.inv.cur && b.i >= 0){switchWeapon(a, b.i); a.p392swap = b.i !== 0; stats.swaps++;}
+  const back = {x: e.a.x - g.ux * (cfg.back || 110), y: e.a.y - g.uy * (cfg.back || 110)};
+  if(s.phase === 'back'){
+   if(dist2(a.x, a.y, back.x, back.y) > 10 ** 2 && g.along < (cfg.back || 110) - 2) return [back.x - a.x, back.y - a.y];
+   s.phase = 'run';
+  }
+  const busy = G.actors.some(o => o !== a && o.alive && !o.zombie && o.bioSurface === TO && dist2(o.x, o.y, e.b.x, e.b.y) < 40 ** 2);
+  if(busy){if(g.along > 100) return [0, 0]; s.phase = 'back'; return [back.x - a.x, back.y - a.y];}
+  const v = a.vx * g.ux + a.vy * g.uy;
+  if(g.along < 80 && v < fullSpeed(a) * .92){
+   if(++s.runs > 4){reroute(a); return [0, 0];}
+   s.phase = 'back'; stats.runups++; return [back.x - a.x, back.y - a.y];
+  }
+  if(g.along <= (s.roll ? 2.5 : s.early)){s.jumped = true; s.phase = 'air'; s.until = G.time + 3; stats.jumps++; return 'jump';}
+  return steerOf(g);
+ }
+ function landed(a){
+  a.ai.p392 = null;
+  if(a.bioSurface === TO){stats.success++; if(a.p392swap && a.inv.w[0]){switchWeapon(a, 0); a.p392swap = false;} return;}
+  stats.fail++; a.p392fails = (a.p392fails || 0) + 1;
+  if(a.fortIndex === fortIndex() && a.p392fails < 2 && G.modeState.phase === 'prep' && G.modeState.remaining > 9){stats.retries++; clearPlan(a); return;}
+  if(a.fortIndex === fortIndex()) reroute(a); else clearPlan(a);
+ }
+ // 僵尸：直线助跑到边缘起跳；只是被挤慢了才退回去重跑，被打过就带着不够的速度硬跳
+ const ZBACK = cfg.back || 110;
+ function zombieJump(a, e){
+  const ai = a.ai; if(!ai || a.bioAir) return null;
+  const g = geo(a, e); if(g.along > 200) return null;
+  let s = ai.z392;
+  if(!s || s.edge !== e || G.time > s.until || G.time < s.at){s = ai.z392 = {edge: e, at: G.time, until: G.time + 8, phase: 'run', runs: 0, hit: false}; stats.zApproach++;}
+  if(a.slowUntil > G.time && !s.hit){s.hit = true; stats.zRunHits++;}
+  const back = {x: e.a.x - g.ux * ZBACK, y: e.a.y - g.uy * ZBACK};
+  if(s.phase === 'back'){
+   if(!s.hit && dist2(a.x, a.y, back.x, back.y) > 10 ** 2 && g.along < ZBACK - 4) return [back.x - a.x, back.y - a.y];
+   s.phase = 'run';
+  }
+  const v = a.vx * g.ux + a.vy * g.uy;
+  const queued = () => G.actors.some(o => o !== a && o.alive && o.zombie && !o.bioAir && o.bioSurface === e.from && ((a.x - o.x) * -g.ux + (a.y - o.y) * -g.uy) > 0 && ((a.x - o.x) * -g.ux + (a.y - o.y) * -g.uy) < ZBACK && Math.abs((o.x - a.x) * -g.uy + (o.y - a.y) * g.ux) < 30);
+  if(!s.hit && g.along < 60 && v < fullSpeed(a) * .9 && s.runs < 2 && !queued()){s.runs++; s.phase = 'back'; return [back.x - a.x, back.y - a.y];}
+  if(g.along <= 8){s.jumped = true; s.phase = 'air'; s.until = G.time + 3; stats.zJumps++; return 'jump';}
+  return steerOf(g);
+ }
+ function zombieAirHit(t){
+  const s = t.pounce391; if(!on() || !t.zombie || !t.bioAir || !s || s.ctl !== api) return;
+  const v = t.vx * ULX + t.vy * ULY; if(v > -40){t.vx -= ULX * (v + 40); t.vy -= ULY * (v + 40);}
+  const px = (t.hitPushX || 0) * ULX + (t.hitPushY || 0) * ULY; if(px > 0){t.hitPushX -= ULX * px; t.hitPushY -= ULY * px;}
+  t.bioAirHitUntil = Math.max(t.bioAirHitUntil || 0, G.time + .6); s.knocked = true; stats.zAirHits++;
+ }
+ const RUN_HIT_WINDOW = .55, RUN_HIT_CAP = .8;
+ function pounceStart(a){
+  const v = Math.max(0, a.vx * ULX + a.vy * ULY), hit = G.time - (a.lastHitT ?? -9) < RUN_HIT_WINDOW && a.lastHitBy && !a.lastHitBy.zombie;
+  const cap = hit ? Math.min(v, fullSpeed(a) * RUN_HIT_CAP) : v;
+  if(hit){stats.zRunHits++; const k = v > cap ? cap / v : 1; a.vx *= k; a.vy *= k;}
+  a.pounce391 = {at: G.time, x: a.x, v0: v, cap, runHit: hit, ctl: api}; stats.zJumpsAll++;
+ }
+ function pounceAir(a){
+  const s = a.pounce391, v = a.vx * ULX + a.vy * ULY;
+  if(v > s.cap){const d = v - s.cap, dt = Math.min(.05, G.time - (s.t || s.at) || 1 / 60); a.vx -= ULX * d; a.vy -= ULY * d; if(s.t){a.x -= ULX * d * dt; a.y -= ULY * d * dt;}}
+  s.t = G.time;
+  if(a.ai && a.cd <= 0 && G.modeState.phase === 'fight'){
+   const fx = a.x + a.vx * .22, fy = a.y + a.vy * .22, fz = BioPlatforms.height(a) + (a.bioVz || 0) * .22 - 450 * .0484;
+   for(const t of G.actors){if(!t.alive || t.zombie || t.bioSurface !== TO) continue;
+    if(Math.hypot(t.x - fx, t.y - fy) < 24 + t.r && Math.abs(fz - BioPlatforms.height(t)) <= 34){a.ang = Math.atan2(t.y - a.y, t.x - a.x); infectionAttack(a); s.claw = true; stats.zAirClaws++; break;}}
+  }
+ }
+ const step0 = BioPlatforms.step;
+ BioPlatforms.step = function(a, dt){
+  const surf = a.bioSurface, out = step0.call(this, a, dt);
+  if(on()){
+   if(a.zombie){
+    if(!a.pounce391 && a.bioAir && surf === FROM && G.time - (a.bioJumpAt ?? -9) < .1) pounceStart(a);
+    if(a.pounce391?.ctl === api && a.bioAir) pounceAir(a);
+    if(a.pounce391?.ctl === api && !a.bioAir){if(a.bioSurface === TO) stats.zLanded++; else stats.zFell++; a.pounce391 = null; if(a.ai) a.ai.z392 = null;}
+   }
+   else if(a.ai?.p392?.jumped && !a.bioAir) landed(a);
+  }else if(a.pounce391?.ctl === api && !a.bioAir) a.pounce391 = null;
+  return out;
+ };
+ const api = {stats, npcJump, zombieJump, zombieAirHit, reroute, canTry, fortIndex, link: LINK, cfg};
+ LINK.ctl392 = api;
+ return api;
+};
+if(typeof window !== 'undefined') window.Pounce392 = Pounce392;
+
+// ---------------- 3.9.2 黄沙古镇 A 古堡城楼：吊桥 ----------------
+// 坡道(96) → 瓮城台 st_a_barb(96, x881–1001) → 吊桥 st_a_bridge(96, x1001–1152) → 48 高台坎跳上城楼(144)。
+// 母体出现 8 秒后吊桥绕城楼一侧铰链收起（1.6 s 动画）：桥面消失（站在上面的人掉下去），四条桥连接摘掉，
+// 换成瓮城台 → 城楼的助跑飞扑连接（缺口 151、高差 48，与雾城信号灯架完全同一组数字）。
+// 单入口不变：上城楼仍然只有「坡道 → 瓮城台」这一条路，桥收起后只是最后一步从走过去变成飞扑。下一回合准备阶段吊桥放下。
+const ST392 = (()=>{
+ const ID = 'bio_sandtown', DELAY = 8, LIFT = 1.6;
+ const BR = {sid: 'st_a_bridge', x: 1001, y: 608, w: 151, h: 112, bioH: 96, slab: 12, art: 'bridge'};
+ const LINK = {from: 'st_a_barb', to: 'st_a_deck', a: {x: 999, y: 664}, b: {x: 1164, y: 664}, jump: true, runup390: true, pounce392: true};
+ const st = {raised: false, raisedAt: -9, fightAt: null, round: null, tickT: -1, saved: [], slab: null, plat: null, raises: 0};
+ const on = () => world?.arena?.id === ID && !!world.arena.st392;
+ const C = Pounce392({on: () => on() && st.raised, link: LINK, gap: 151, reachK: .7, back: 110});
+ function clearBridgePlans(){
+  for(const a of G.actors){const ai = a.ai; if(!ai) continue;
+   if(ai.bioEdge?.bridge392 || (ai.path || []).some?.(e => e?.bridge392)){ai.path = null; ai.goal = null; ai.bioEdge = null;}}
+ }
+ function raise(){
+  const ar = world.arena; if(st.raised) return;
+  st.plat = ar.platforms.find(p => p.sid === BR.sid) || st.plat; ar.platforms = ar.platforms.filter(p => p.sid !== BR.sid);
+  if(st.slab){st.slab.mv = 0; st.slab.bl = 0; st.slab.vs = 0;}
+  st.saved = ar.links.filter(e => e.bridge392); ar.links = ar.links.filter(e => !e.bridge392); if(!ar.links.includes(LINK)) ar.links.push(LINK);
+  st.raised = true; st.raisedAt = G.time; st.raises++; clearBridgePlans();
+  try{UI.announce('吊桥收起！', 'storm', 'A 古堡城楼只能从瓮城台助跑飞扑上去');}catch(e){}
+ }
+ function lower(){
+  const ar = world.arena; if(!st.raised) return;
+  if(st.plat && !ar.platforms.includes(st.plat)) ar.platforms.push(st.plat);
+  if(st.slab){st.slab.mv = 1; st.slab.bl = 1; st.slab.vs = 1;}
+  ar.links = ar.links.filter(e => e !== LINK); for(const e of st.saved) if(!ar.links.includes(e)) ar.links.push(e);
+  st.raised = false; st.raisedAt = -9; clearBridgePlans();
+ }
+ function tick(){
+  if(st.tickT === G.time) return; st.tickT = G.time;
+  const m = G.modeState; if(!m || G.mode !== 'infection') return;
+  if(m.round !== st.round){st.round = m.round; st.fightAt = null; lower();}
+  if(m.phase === 'fight'){if(st.fightAt == null) st.fightAt = G.time; if(!st.raised && G.time - st.fightAt >= DELAY) raise();}
+  else if(m.phase === 'prep'){st.fightAt = null; lower();}
+ }
+ const step0 = BioPlatforms.step;
+ BioPlatforms.step = function(a, dt){if(on()) tick(); return step0.call(this, a, dt);};
+ const map = BioSandtown280, build0 = map.build;
+ map.build = function(w, wall){
+  const out = build0.apply(this, arguments);
+  const n0 = w.obstacles ? w.obstacles.length : 0;
+  st.plat = BioKit280.overheadDeck(w, BR);
+  st.slab = (w.obstacles || []).slice(n0).find(o => o.sid === BR.sid + '_slab') || (w.obstacles || []).find(o => o.sid === BR.sid + '_slab') || null;
+  w.arena.st392 = 1; st.raised = false; st.saved = []; st.round = null; st.fightAt = null; st.tickT = -1;
+  return out;
+ };
+ // 美术：铰链在城楼一侧（x1152）。放下时是木桥面；收起时绕铰链立起来，画成倒向城楼的木板墙 + 两条铁链
+ const draw0 = map.draw;
+ const plank = (c, pts, a) => {c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.fillStyle = a; c.fill();};
+ map.draw = function(c, w, overview = false, forceOblique = null){
+  const out = draw0.apply(this, arguments);
+  if(w?.arena?.id !== ID) return out;
+  try{
+   const ov = overview || !!(c.getTransform && Math.abs(c.getTransform().a) < .6);
+   const QA = window.BioQuarantineArt, ob = forceOblique != null ? forceOblique : QA ? QA.isOblique(w, ov) : false;
+   const S = ob ? (QA ? QA.SHIFT : .35 / .82) : 0;
+   const raised = w?.arena?.id === ID && st.raised, p = raised ? Math.min(1, (G.time - st.raisedAt) / LIFT) : 0;
+   const th = p * p * (3 - 2 * p) * Math.PI / 2 * .88, x1 = BR.x + BR.w, L = BR.w, z0 = BR.bioH;
+   const xe = x1 - L * Math.cos(th), ze = z0 + L * Math.sin(th), y0 = BR.y, y1 = BR.y + BR.h;
+   c.save();
+   if(!raised && S > 0){c.fillStyle = 'rgba(66,36,12,.22)'; c.fillRect(BR.x + 10, y0 + 16, BR.w - 16, BR.h);}
+   if(raised && p >= 1){
+    // 立起来的桥：铰链处一道厚木板墙
+    // 立起来的桥面（略向瓮城台一侧倾斜）：正面木板 + 厚边 + 横向板缝
+    const top = ze * S, base = z0 * S;
+    plank(c, [[xe, y0 - top], [x1, y0 - base], [x1, y1 - base], [xe, y1 - top]], '#8b5f35');
+    c.fillStyle = 'rgba(255,220,170,.18)'; for(let i = 1; i < 10; i++){const k = i / 10; c.fillRect(xe + (x1 - xe) * k - 1, y0 - top + (top - base) * k, 2, BR.h);}
+    plank(c, [[xe - 8, y0 - top], [xe, y0 - top], [xe, y1 - top], [xe - 8, y1 - top]], '#5a3a1e');
+    c.strokeStyle = '#3e2412'; c.lineWidth = 3; c.beginPath(); c.moveTo(xe, y0 - top); c.lineTo(x1, y0 - base); c.lineTo(x1, y1 - base); c.lineTo(xe, y1 - top); c.closePath(); c.stroke();
+   }else{
+    plank(c, [[xe, y0 - ze * S], [x1, y0 - z0 * S], [x1, y1 - z0 * S], [xe, y1 - ze * S]], '#93673d');
+    c.fillStyle = 'rgba(255,220,170,.22)'; const n = 12;
+    for(let i = 1; i < n; i++){const k = i / n, xx = xe + (x1 - xe) * k, zz = ze + (z0 - ze) * k; c.fillRect(xx, y0 - zz * S + 4, 1.5, BR.h - 8);}
+    c.fillStyle = '#5a3a1e'; for(const yy of [y0 + 6, y1 - 9]){c.beginPath(); c.moveTo(xe, yy - ze * S); c.lineTo(x1, yy - z0 * S); c.lineTo(x1, yy - z0 * S + 3); c.lineTo(xe, yy - ze * S + 3); c.closePath(); c.fill();}
+   }
+   // 铁链：城楼门楼 → 桥头
+   c.strokeStyle = 'rgba(48,40,34,.9)'; c.lineWidth = 2.5; c.setLineDash([4, 3]);
+   for(const yy of [y0 + 8, y1 - 8]){c.beginPath(); c.moveTo(x1 + 10, yy - (z0 + 96) * S); c.lineTo(xe, yy - ze * S); c.stroke();}
+   c.setLineDash([]);
+   c.restore();
+  }catch(e){}
+  return out;
+ };
+ return {stats: C.stats, ctl: C, state: st, raise, lower, link: LINK, bridge: BR, delay: DELAY};
+})();
+if(typeof window !== 'undefined') window.ST392 = ST392;
+
+// ---------------- 3.9.3 检修梯（通用攀爬控制器 Climb393）----------------
+// 梯子是一条 ladder393 连接（地面 → 窄道），一次只能一个人爬，爬的过程固定 cfg.T 秒、贴在梯子上不能移动。
+// 僵尸也走同一把梯子：爬梯中累计吃到 ≥ cfg.knock 点子弹伤害就被打下梯子（向外摔下）；人类爬梯时被僵尸抓到照常感染。
+// 18_bio_platforms.routeMove 把带 ctl393 的连接交给控制器；玩家在梯子脚下朝梯子方向推摇杆就会开始爬。
+const Climb393 = function(cfg){
+ const LINK = cfg.link, stats = {climbs: 0, done: 0, knocked: 0, hClimbs: 0, zClimbs: 0, waits: 0};
+ const on = () => !!cfg.on();
+ const ux = LINK.b.x - LINK.a.x, uy = LINK.b.y - LINK.a.y, UL = Math.hypot(ux, uy) || 1;
+ const busy = a => G.actors.some(o => o !== a && o.alive && o.climb393 && o.climb393.ctl === api);
+ // 梯子脚下：站在 LINK.from 那一层（地面或台面）上、高度等于 z0
+ const atFoot = a => Math.abs(BioPlatforms.height(a) - (cfg.z0 || 0)) < 2 && (a.bioSurface || null) === (LINK.from || null);
+ function start(a){
+  if(a.climb393 || a.bioAir || !atFoot(a) || busy(a)) return false;
+  a.climb393 = {t0: G.time, ctl: api, dmg: 0}; a.x = LINK.a.x; a.y = LINK.a.y; a.vx = a.vy = 0; a.hitPushX = a.hitPushY = 0;
+  stats.climbs++; if(a.zombie) stats.zClimbs++; else stats.hClimbs++; return true;
+ }
+ function finish(a){
+  a.climb393 = null; a.x = LINK.b.x; a.y = LINK.b.y; a.bioZ = cfg.z1; a.bioVz = 0; a.bioAir = false; a.bioSurface = LINK.to; stats.done++;
+  if(a.ai){a.ai.path = null; a.ai.goal = null; a.ai.bioEdge = null;}
+ }
+ function knock(a){
+  const c = a.climb393; if(!c) return; a.climb393 = null; stats.knocked++;
+  a.bioAir = true; a.bioVz = 60; a.bioSurface = null; a.hitPushX = -ux / UL * 150; a.hitPushY = -uy / UL * 150; a.bioAirHitUntil = G.time + .6;
+  if(a.ai){a.ai.path = null; a.ai.goal = null; a.ai.bioEdge = null;}
+ }
+ // 子弹命中爬梯的僵尸（05_entities 调用）
+ function hit(t, dmg){const c = t.climb393; if(!c || c.ctl !== api || !t.zombie) return; c.dmg += dmg || 0; if(c.dmg >= cfg.knock) knock(t);}
+ // AI：走到梯子脚下 → 开爬；梯子上有人就在脚下稍后的位置等
+ function route(a, e){
+  if(a.climb393) return [0, 0];
+  const d = dist(a.x, a.y, e.a.x, e.a.y); if(d > 60) return null;
+  if(busy(a)){stats.waits++; const wx = e.a.x - ux / UL * 34, wy = e.a.y - uy / UL * 34; return d > 30 && dist2(a.x, a.y, wx, wy) > 8 ** 2 ? [wx - a.x, wy - a.y] : [0, 0];}
+  if(d <= 18 && start(a)) return [0, 0];
+  return [e.a.x - a.x, e.a.y - a.y];
+ }
+ const step0 = BioPlatforms.step;
+ BioPlatforms.step = function(a, dt){
+  if(on() && !a.climb393 && !a.ai && a.alive && !a.bioAir && atFoot(a) && dist2(a.x, a.y, LINK.a.x, LINK.a.y) < 20 ** 2){
+   const c = a.ctrl || {}; if(((c.mx || 0) * ux + (c.my || 0) * uy) / UL > .5) start(a);
+  }
+  const out = step0.call(this, a, dt);
+  const c = a.climb393;
+  if(c && c.ctl === api){
+   if(!on() || !a.alive){a.climb393 = null; return out;}
+   const k = (G.time - c.t0) / cfg.T;
+   if(k >= 1) finish(a);
+   else{a.x = LINK.a.x; a.y = LINK.a.y; a.vx = a.vy = 0; a.bioZ = cfg.z0 + (cfg.z1 - cfg.z0) * k; a.bioVz = 0; a.bioAir = false; a.bioSurface = null;}
+  }
+  return out;
+ };
+ const api = {stats, start, knock, hit, route, link: LINK, cfg, busy};
+ LINK.ctl393 = api;
+ return api;
+};
+if(typeof window !== 'undefined') window.Climb393 = Climb393;
+
+// ---------------- 3.9.3 锈蚀水厂 A 水塔检修台：管道中段检修梯 ----------------
+// 唯一上法：地面 → 检修梯（x424，爬 1.6 s，一次一人）→ 单人宽贴墙管道（48 宽、限速 150）→ 检修台。原来的踏箱拆掉。
+// 僵尸同样爬这把梯子；爬梯时累计吃到 ≥ 100 点子弹伤害就被打下来（向南摔回地面），所以守住管道口就能拦住，但要持续开火。
+const WW393 = (()=>{
+ const ID = 'bio_waterworks', LINK = WATERWORKS281_SPEC.links.find(e => e.ladder393);
+ const C = Climb393({on: () => world?.arena?.id === ID, link: LINK, z0: 0, z1: 128, T: 1.6, knock: 100});
+ const map = BioWaterworks281, draw0 = map.draw;
+ map.draw = function(c, w, overview = false, forceOblique = null){
+  const out = draw0.apply(this, arguments);
+  if(w?.arena?.id !== ID) return out;
+  try{
+   const ov = overview || !!(c.getTransform && Math.abs(c.getTransform().a) < .6);
+   const QA = window.BioQuarantineArt, ob = forceOblique != null ? forceOblique : QA ? QA.isOblique(w, ov) : false, S = ob ? (QA ? QA.SHIFT : .35 / .82) : 0;
+   const x = LINK.a.x, yb = 672, H = 128 * S, top = yb - H;
+   c.save();
+   // 梯子贴在管道南侧立面上：两根立柱 + 横档；顶部一圈护笼
+   c.fillStyle = 'rgba(20,24,26,.35)'; c.fillRect(x - 14, yb, 28, 22);
+   c.strokeStyle = '#c9772e'; c.lineWidth = 3.5;
+   for(const dx of [-11, 11]){c.beginPath(); c.moveTo(x + dx, yb + 18); c.lineTo(x + dx, top - 6); c.stroke();}
+   c.lineWidth = 2.2; c.strokeStyle = '#e09a4a';
+   const n = Math.max(3, Math.round((H + 18) / 9)); for(let i = 0; i <= n; i++){const yy = yb + 16 - (H + 20) * i / n; c.beginPath(); c.moveTo(x - 11, yy); c.lineTo(x + 11, yy); c.stroke();}
+   if(S > 0){c.strokeStyle = 'rgba(150,80,30,.9)'; c.lineWidth = 2; for(const k of [.55, .78]){const yy = yb - H * k; c.beginPath(); c.ellipse(x, yy + 6, 15, 8, 0, Math.PI, 0); c.stroke();}}
+   c.restore();
+  }catch(e){}
+  return out;
+ };
+ return {stats: C.stats, ctl: C, link: LINK};
+})();
+if(typeof window !== 'undefined') window.WW393 = WW393;
+
+// ---------------- 3.9.4 暮林观测站：天文舱顶 + 一次性升降台 ----------------
+// 新据点 G · 天文舱顶（观测舱顶 248 高，容 4 人）。唯一上法在观测楼大天台(128)上、舱西侧的升降台 obs_lift：
+//   台下降时（每回合开始）人类走上去 → 第一个人站上后 3 秒（或站满 4 人）启动 → 6 秒升到 248，之后整回合停在顶上（一次性）。
+//   升降台开动后，台面南侧的升降井导轨成为唯一上法：爬 2 秒（Climb393，一次一人），爬的僵尸吃够 100 点子弹伤害就被打回天台。
+//   僵尸不能乘升降台（台在下面时它们没有路线上舱顶），所以舱顶据点只能靠爬导轨攻上去。
+const OBS394 = (()=>{
+ const ID = 'bio_observatory279', LIFT = {sid: 'obs_lift', x: 944, y: 704, w: 64, h: 80}, TOP = {sid: 'obs_dome_top', x: 1008, y: 656, w: 184, h: 176, bioH: 248};
+ const Z0 = 128, Z1 = 248, RISE = 6, BOARD = 3;
+ const st = {state: 'down', h: Z0, t0: -9, departAt: null, round: null, tickT: -1, plat: null, obs: null, walk: [], rides: 0, upAt: -9};
+ const on = () => world?.arena?.id === ID && !!world.arena.obs394;
+ const LADDER = {from: 'obs_a', to: LIFT.sid, a: {x: 976, y: 808}, b: {x: 976, y: 768}, jump: false, ladder393: true};
+ const C = Climb393({on: () => on() && st.state !== 'down', link: LADDER, z0: Z0, z1: Z1, T: 2, knock: 100});
+ const WALK = [
+  {from: 'obs_a', to: LIFT.sid, a: {x: 976, y: 808}, b: {x: 976, y: 768}, jump: false, humanOnly: true, lift394walk: true},
+  {from: LIFT.sid, to: 'obs_a', a: {x: 976, y: 768}, b: {x: 976, y: 808}, jump: false, lift394walk: true}];
+ const STAY = [
+  {from: LIFT.sid, to: TOP.sid, a: {x: 996, y: 744}, b: {x: 1032, y: 744}, jump: false, lift394: true},
+  {from: TOP.sid, to: LIFT.sid, a: {x: 1032, y: 744}, b: {x: 996, y: 744}, jump: false},
+  {from: TOP.sid, to: 'obs_a', a: {x: 1176, y: 744}, b: {x: 1236, y: 744}, jump: false}];
+ const inLift = a => a.x > LIFT.x && a.x < LIFT.x + LIFT.w && a.y > LIFT.y && a.y < LIFT.y + LIFT.h;
+ const api = {route(a, e){ if(st.state === 'up') return null; return [0, 0]; }};
+ STAY[0].ctl394 = api;
+ function setH(h){st.h = h; if(st.plat) st.plat.bioH = h; if(st.obs) st.obs.bioH = h;}
+ function clearPlans(){for(const a of G.actors){const ai = a.ai; if(!ai) continue; if((ai.path || []).some?.(e => e?.lift394walk || e?.ladder393) || ai.bioEdge?.lift394walk){ai.path = null; ai.goal = null; ai.bioEdge = null;}}}
+ function reset(){
+  const ar = world.arena; setH(Z0); st.state = 'down'; st.departAt = null; st.t0 = -9;
+  ar.links = ar.links.filter(e => e !== LADDER); for(const e of WALK) if(!ar.links.includes(e)) ar.links.push(e); clearPlans();
+ }
+ function depart(){
+  const ar = world.arena; st.state = 'rising'; st.t0 = G.time; st.rides++;
+  ar.links = ar.links.filter(e => !e.lift394walk); if(!ar.links.includes(LADDER)) ar.links.push(LADDER); clearPlans();
+ }
+ // 回合开始：随机挑 4 个 NPC 人类去舱顶
+ function assign(){
+  const fi = world.arena.forts.findIndex(f => f.surfaceId === TOP.sid); if(fi < 0) return;
+  const pool = G.actors.filter(a => a.ai && !a.isPlayer && a.alive && !a.zombie);
+  for(let i = pool.length - 1; i > 0; i--){const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]];}
+  pool.slice(0, 4).forEach((a, k) => {a.fortIndex = fi; a.holdSlot = k;});
+ }
+ function tick(){
+  if(st.tickT === G.time) return; st.tickT = G.time;
+  const m = G.modeState; if(!m || G.mode !== 'infection') return;
+  if(m.round !== st.round){st.round = m.round; reset();}
+  if(st.state === 'down'){
+   const riders = G.actors.filter(a => a.alive && !a.zombie && !a.bioAir && inLift(a) && Math.abs(BioPlatforms.height(a) - Z0) < 2).length;
+   if(!riders) st.departAt = null;
+   else{if(st.departAt == null) st.departAt = G.time + BOARD; if(riders >= 4 || G.time >= st.departAt) depart();}
+  }
+  if(st.state === 'rising'){
+   const k = Math.min(1, (G.time - st.t0) / RISE); setH(Z0 + (Z1 - Z0) * k);
+   if(k >= 1){for(const o of G.actors) if(o.alive && !o.climb393 && inLift(o) && Math.abs(BioPlatforms.height(o) - Z1) < 20){o.bioZ = Z1; o.bioVz = 0; o.bioAir = false; o.bioSurface = LIFT.sid;}
+    st.state = 'up'; st.upAt = G.time; try{UI.announce('升降台已到顶', 'storm', 'G 天文舱顶：之后只能爬升降井导轨上去');}catch(e){}}
+  }
+ }
+ const step0 = BioPlatforms.step;
+ BioPlatforms.step = function(a, dt){
+  if(!on()) return step0.call(this, a, dt);
+  tick();
+  const out = step0.call(this, a, dt);
+  // 乘客跟着台面走
+  if(st.state === 'rising' && a.alive && !a.climb393 && inLift(a) && Math.abs(BioPlatforms.height(a) - st.h) < 14){a.bioZ = st.h; a.bioVz = 0; a.bioAir = false; a.bioSurface = LIFT.sid;}
+  return out;
+ };
+ const round0 = startInfectionRound;
+ startInfectionRound = function(){const out = round0.apply(this, arguments); if(on()){reset(); assign();} return out;};
+ // 台在天台高度时与观测楼天台同高：surfaceAt 会先返回天台，这里把台面范围内的点归给升降台（乘客、AI 路线都靠它）
+ const surf0 = BioPlatforms.surfaceAt;
+ BioPlatforms.surfaceAt = function(x, y, z = Infinity, r = 0){
+  const s = surf0.call(this, x, y, z, r);
+  if(st.plat && on() && x > LIFT.x && x < LIFT.x + LIFT.w && y > LIFT.y && y < LIFT.y + LIFT.h && st.h <= z + .1 && (!s || (s.bioH ?? 0) <= st.h + .1)) return st.plat;
+  return s;
+ };
+ const map = BioMapObservatory279, build0 = map.build;
+ map.build = function(w, wall){
+  const out = build0.apply(this, arguments), ar = w.arena;
+  st.plat = {sid: LIFT.sid, x: LIFT.x, y: LIFT.y, w: LIFT.w, h: LIFT.h, bioH: Z0, floor: 0, material: 'metal'}; ar.platforms.push(st.plat);
+  ar.platforms.push({sid: TOP.sid, x: TOP.x, y: TOP.y, w: TOP.w, h: TOP.h, bioH: TOP.bioH, floor: 0, material: 'metal'});
+  st.obs = {k: 0, x: LIFT.x, y: LIFT.y, w: LIFT.w, h: LIFT.h, bioH: Z0, mv: 1, bl: 1, vs: 1, type: 'obs_lift', material: 'metal', floor: 0, sid: LIFT.sid + '_body'}; addObs(w, st.obs);
+  ar.links.push(...WALK, ...STAY);
+  ar.forts.push({name: 'G · 天文舱顶', surfaceId: TOP.sid, x: 1100, y: 744, floor: 0, guard: {x: 976, y: 840}, capacity: 4, score: .7, escapeCount: 1, role: 'dome_lift',
+   slots: [{x: 1044, y: 692}, {x: 1156, y: 692}, {x: 1044, y: 796}, {x: 1156, y: 796}]});
+  w.arena.obs394 = 1; st.state = 'down'; st.h = Z0; st.round = null; st.tickT = -1; st.departAt = null;
+  return out;
+ };
+ // 美术：升降台台面（随高度抬升）+ 四角导轨 + 南侧爬梯式导轨
+ const draw0 = map.draw;
+ map.draw = function(c, w, overview = false){
+  const out = draw0.apply(this, arguments);
+  if(w?.arena?.id !== ID) return out;
+  try{
+   const QA = window.BioQuarantineArt, ob = QA ? QA.isOblique(w, overview) : false, S = ob ? QA.SHIFT : 0;
+   const h = w.arena.obs394 ? st.h : Z0, {x, y, w: lw, h: lh} = LIFT, y1 = y + lh, lift = h * S, base = Z0 * S, rail = (Z1 + 34) * S;
+   c.save();
+   // 导轨
+   c.strokeStyle = '#59636b'; c.lineWidth = 4;
+   for(const xx of [x + 4, x + lw - 4]){c.beginPath(); c.moveTo(xx, y1 - base); c.lineTo(xx, y1 - rail); c.stroke(); c.beginPath(); c.moveTo(xx, y + 4 - base); c.lineTo(xx, y + 4 - rail); c.stroke();}
+   // 南侧爬梯横档
+   c.strokeStyle = 'rgba(205,170,70,.85)'; c.lineWidth = 2; for(let zz = Z0 + 12; zz <= Z1; zz += 12){c.beginPath(); c.moveTo(x + 4, y1 - zz * S); c.lineTo(x + lw - 4, y1 - zz * S); c.stroke();}
+   // 台体侧面 + 台面
+   if(S > 0){c.fillStyle = '#4a545b'; c.fillRect(x, y1 - lift, lw, Math.max(4, lift - base));}
+   c.fillStyle = '#9aa6ae'; c.fillRect(x, y - lift, lw, lh);
+   c.strokeStyle = '#d9b84a'; c.lineWidth = 3; c.setLineDash([8, 6]); c.strokeRect(x + 3, y - lift + 3, lw - 6, lh - 6); c.setLineDash([]);
+   c.fillStyle = 'rgba(30,36,40,.5)'; for(let yy = y + 10; yy < y1 - 6; yy += 12) c.fillRect(x + 8, yy - lift, lw - 16, 2);
+   if(overview){c.font = 'bold 72px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff1cf'; c.fillText('G', TOP.x + TOP.w / 2, TOP.y + TOP.h / 2);}
+   c.restore();
+  }catch(e){}
+  return out;
+ };
+ return {state: st, climb: C, lift: LIFT, top: TOP, ladder: LADDER, depart, reset};
+})();
+if(typeof window !== 'undefined') window.OBS394 = OBS394;
 // ---- 57_frostcity.js ----
 // BEGIN FROSTCITY320
 // 3.2.1：所有人类据点只有一条上去的路（单入口），避免两面受敌。
@@ -20698,14 +21129,16 @@ if(typeof window !== 'undefined') window.BF5 = BF5;
 const FROSTCITY320 = (()=>{
  const P = 'fc_', ID = 'bio_frostcity320', LEGACY = ['bio_oldcity279', 'bio_powerstation279'];
  const grid = (xs, ys) => ys.flatMap(y => xs.map(x => ({x, y})));
+ // 3.9.0 F 信号灯架：GAP = 外廊起跳边缘到龙门架西沿的水平距离（见 work/fort-390/NOTES.md 的实测）
+ const GAP390 = 151, GANTRY_X0 = 872, GAL_X1 = GANTRY_X0 - GAP390, GANTRY = P + 'f_gantry';
  const step = (from, to, a, b, up = true) => [{from, to, a, b, jump: up}, {from: to, to: from, a: b, b: a, jump: up && from !== null && to !== null ? false : false}];
  // 上跳 jump:true，反向落下 jump:false
  const both = (from, to, a, b) => [{from, to, a, b, jump: true}, {from: to, to: from, a: b, b: a, jump: false}];
  const drop = (from, a, b) => ({from, to: null, a, b, jump: false});
  const FROST_RAMP = {top:'#aab4bd', face:'#5d6872', joint:'rgba(24,32,44,.45)', step:'rgba(30,40,52,.5)', hi:'rgba(240,246,252,.55)', edge:'rgba(22,30,40,.75)', warn:'rgba(222,178,64,.8)', speck:['rgba(30,40,52,.25)', 'rgba(250,252,255,.45)']};
  const SPEC = {
-  id: ID, name: '雾城变电区', version: 'frostcity-3.2.1', size: 3200, theme: 'snow',
-  description: '雪夜城区（3.2.1 单入口）：每个人类据点只有一条上去的路——中央变电站只走南坡道上 96 下层，再从内部跳上 144/192；A 钟楼窄坡道、B 铁笼低门、D 站台南侧单货箱、E 楼顶东侧货箱。',
+  id: ID, name: '雾城变电区', version: 'frostcity-3.9.0', size: 3200, theme: 'snow',
+  description: '雪夜城区（3.2.1 单入口）：每个人类据点只有一条上去的路——中央变电站只走南坡道上 96 下层，再从内部跳上 144/192；A 钟楼窄坡道、B 铁笼低门、D 站台南侧单货箱、E 楼顶东侧货箱；F 路口信号灯龙门架（3.9.0）只能从西侧公寓二楼外廊尽头助跑跳上，僵尸上不去。',
   bounds: {x: 96, y: 96, w: 3008, h: 3008},
   platforms: [
    // ---- A 钟楼：侧楼外墙 + 80 宽窄坡道（160）→ 钟楼平台 ----
@@ -20719,7 +21152,9 @@ const FROSTCITY320 = (()=>{
    {sid: P + 'd_box3', x: 2752, y: 672, w: 96, h: 80, bioH: 64, art: 'crate'},
    // ---- E 公寓楼顶：东侧货箱 / 北侧垃圾箱→空调外机，两条路线 ----
    {sid: P + 'e_roof', badge: 'E', x: 352, y: 2400, w: 448, h: 256, bioH: 112, art: 'roof_ind', label: 'E · 公寓楼顶'},
-   {sid: P + 'e_box', x: 800, y: 2528, w: 80, h: 80, bioH: 56, art: 'crate'}
+   {sid: P + 'e_box', x: 800, y: 2528, w: 80, h: 80, bioH: 56, art: 'crate'},
+   // ---- F（3.9.0）西区公寓二楼外廊（南立面）：楼梯在楼西端、从西南空地上，外廊东端伸出成阳台，是跳上信号灯架的唯一起跳点 ----
+   {sid: P + 'f_gallery', x: 448, y: 1664, w: GAL_X1 - 448, h: 48, bioH: 128, art: 'fc_gallery', label: 'F · 公寓二楼外廊'}
   ],
   ramps: [
    // 钟楼：贴侧楼南墙的窄坡道，无护栏，击退即坠落（原旧城 D）
@@ -20727,9 +21162,15 @@ const FROSTCITY320 = (()=>{
     entry: {x: 304, y: 680}, foot: {x: 376, y: 680}, tip: {x: 616, y: 680}, inside: {x: 680, y: 680}, pal: FROST_RAMP},
    // 中央：南坡道 → 下层；西长坡 → 中层
    {sid: P + 'c_ramp_s', x: 1536, y: 1824, w: 96, h: 176, rise: 96, run: 160, dir: 'n', narrow: 96, speed: 400, to: P + 'c1',
-    entry: {x: 1584, y: 2048}, foot: {x: 1584, y: 1976}, tip: {x: 1584, y: 1844}, inside: {x: 1584, y: 1776}, pal: FROST_RAMP}
+    entry: {x: 1584, y: 2048}, foot: {x: 1584, y: 1976}, tip: {x: 1584, y: 1844}, inside: {x: 1584, y: 1776}, pal: FROST_RAMP},
+   // F（3.9.0）：公寓西端室外楼梯（48 宽、慢行），从西南空地上到二楼外廊
+   {sid: P + 'f_stairs', x: 224, y: 1664, w: 224, h: 48, rise: 128, run: 208, dir: 'e', narrow: 48, speed: 150, to: P + 'f_gallery',
+    entry: {x: 176, y: 1716}, foot: {x: 244, y: 1690}, tip: {x: 424, y: 1688}, inside: {x: 488, y: 1688}, pal: FROST_RAMP}
   ],
-  overheads: [],
+  // F（3.9.0）：路口信号灯龙门架。桥面可站立、下方可通行；24 厚的横梁挡住从下面跳/打
+  overheads: [
+   {sid: GANTRY, x: GANTRY_X0, y: 1656, w: 1072 - GANTRY_X0, h: 64, bioH: 176, slab: 24, art: 'fc_gantry', label: 'F · 信号灯架'}
+  ],
   modules: [
    {kind: 'cage', sid: P + 'b_cage', name: 'B · 配电铁笼', x: 2432, y: 2304, w: 448, h: 384, door: 'west'}
   ],
@@ -20756,12 +21197,17 @@ const FROSTCITY320 = (()=>{
    {id: P + 'd_car', x: 2368, y: 880, w: 448, h: 96, H: 200, art: 'container', tint: 1},
    {id: P + 'ne_shed', x: 2960, y: 768, w: 112, h: 256, H: 180, art: 'shed'},
    // 西部：公寓楼、停着的公交车
-   {id: P + 'w_apt1', x: 160, y: 1344, w: 320, h: 288, H: 280, art: 'plant'},
-   {id: P + 'w_apt2', x: 160, y: 1712, w: 288, h: 256, H: 240, art: 'plant'},
+   {id: P + 'w_apt1', x: 160, y: 1344, w: 320, h: 320, H: 280, art: 'plant'},
+   // 3.9.0：西南小楼压低、向南让出 32，避免斜视下挡住北侧的室外楼梯
+   {id: P + 'w_apt2', x: 224, y: 1744, w: 224, h: 224, H: 160, art: 'plant'},
    // 3.2.1：公交站棚、报亭改为不可站立的装饰（取消低矮据点）
    {id: P + 'w_shelter', x: 640, y: 1456, w: 176, h: 80, H: 150, art: 'shed'},
    {id: P + 'n_kiosk', x: 1440, y: 720, w: 128, h: 96, H: 150, art: 'shed'},
-   {id: P + 'w_bus', x: 560, y: 1760, w: 256, h: 96, H: 112, art: 'truck'},
+   {id: P + 'w_bus', x: 512, y: 2200, w: 256, h: 96, H: 112, art: 'truck'},
+   // F（3.9.0）：外廊所在的公寓楼（外廊贴南立面，东端多伸出 24 成阳台）、龙门架两根立柱（只挡地面，不可站立）
+   {id: P + 'f_apt', x: 480, y: 1536, w: GAL_X1 - 24 - 480, h: 128, H: 260, art: 'plant'},
+   {id: P + 'f_pole_w', x: GANTRY_X0 + 6, y: 1680, w: 16, h: 16, H: 152, visualH: 152, art: 'fc_pole'},
+   {id: P + 'f_pole_e', x: 1048, y: 1680, w: 16, h: 16, H: 152, visualH: 152, art: 'fc_pole'},
    // 中央变电站：中层变压器、控制室屋顶通风机、平台外侧绝缘子架
    {id: P + 'c_tx', x: 1440, y: 1416, w: 128, h: 64, H: 224, bioBaseH: 144, surfaceId: P + 'c2', art: 'pumpbox'},
    {id: P + 'c_vent', x: 1792, y: 1424, w: 64, h: 48, H: 232, bioBaseH: 192, surfaceId: P + 'c3', art: 'vent'},
@@ -20805,7 +21251,11 @@ const FROSTCITY320 = (()=>{
    ...both(null, P + 'e_box', {x: 928, y: 2568}, {x: 840, y: 2568}),
    ...both(P + 'e_box', P + 'e_roof', {x: 824, y: 2568}, {x: 768, y: 2568}),
    drop(P + 'e_roof', {x: 576, y: 2632}, {x: 576, y: 2720}),
-   drop(P + 'e_roof', {x: 376, y: 2560}, {x: 296, y: 2560})
+   drop(P + 'e_roof', {x: 376, y: 2560}, {x: 296, y: 2560}),
+   // F：外廊北侧落地；外廊尽头 → 龙门架是唯一上法（人类和僵尸都要满速助跑在边缘起跳；3.9.1 起僵尸也能用）；龙门架东端落地
+   drop(P + 'f_gallery', {x: 600, y: 1700}, {x: 600, y: 1752}),
+   {from: P + 'f_gallery', to: GANTRY, a: {x: GAL_X1 - 2, y: 1688}, b: {x: GANTRY_X0 + 12, y: 1688}, jump: true, runup390: true},
+   drop(GANTRY, {x: 1000, y: 1710}, {x: 1000, y: 1758})
   ],
   forts: [
    {name: 'A · 钟楼平台', surfaceId: P + 'a_deck', x: 768, y: 664, floor: 0, guard: {x: 304, y: 680},
@@ -20819,7 +21269,10 @@ const FROSTCITY320 = (()=>{
    {name: 'D · 高架站台', surfaceId: P + 'd_deck', x: 2640, y: 600, floor: 0, guard: {x: 2800, y: 800},
     slots: [...grid([2416, 2496, 2720, 2800, 2864], [584, 640]), {x: 2600, y: 624}], capacity: 8, score: .74, escapeCount: 1, layout: 'crate-dock'},
    {name: 'E · 公寓楼顶', surfaceId: P + 'e_roof', x: 576, y: 2528, floor: 0, guard: {x: 928, y: 2568},
-    slots: [...grid([400, 480, 560], [2464, 2560, 2624]), {x: 720, y: 2576}, {x: 720, y: 2624}], capacity: 8, score: .7, escapeCount: 1, layout: 'roof-crate'}
+    slots: [...grid([400, 480, 560], [2464, 2560, 2624]), {x: 720, y: 2576}, {x: 720, y: 2624}], capacity: 8, score: .7, escapeCount: 1, layout: 'roof-crate'},
+   // 3.9.0：F 信号灯架（4 人），入口 = 外廊尽头的起跳点
+   {name: 'F · 信号灯架', surfaceId: GANTRY, x: 984, y: 1688, floor: 0, guard: {x: GAL_X1 - 40, y: 1688},
+    slots: [{x: 930, y: 1676}, {x: 966, y: 1700}, {x: 1002, y: 1676}, {x: 1038, y: 1700}], capacity: 4, score: .9, escapeCount: 1, layout: 'gantry', gantry390: 1}
   ],
   spawns: grid([1376, 1424, 1472, 1520, 1568, 1616, 1664, 1712], [2592, 2640, 2688, 2736]).map(p => ({...p, floor: 0})),
   supplies: [
@@ -20846,11 +21299,11 @@ const FROSTCITY320 = (()=>{
   ],
   roads: [],
   pipes: [],
-  landmarks: [{name: '钟楼', x: 768, y: 620}, {name: '中央变电站', x: 1600, y: 1600}, {name: '高架站台', x: 2640, y: 560}, {name: '配电铁笼', x: 2656, y: 2496}, {name: '公寓楼', x: 576, y: 2528}],
+  landmarks: [{name: '信号灯架', x: 960, y: 1688}, {name: '钟楼', x: 768, y: 620}, {name: '中央变电站', x: 1600, y: 1600}, {name: '高架站台', x: 2640, y: 560}, {name: '配电铁笼', x: 2656, y: 2496}, {name: '公寓楼', x: 576, y: 2528}],
   // 路灯：纯装饰光斑（无碰撞），沿两条主街
   lamps: [[400, 1144], [1240, 1144], [2400, 1144], [2880, 1144], [400, 2024], [1240, 2024], [2400, 2024], [2880, 2024], [888, 420], [888, 2480], [2184, 1600], [2184, 2600], [888, 1640], [1600, 2400]]
  };
- for(const k of ['platforms', 'ramps', 'blocks', 'surfaces']) for(const o of SPEC[k]) o.frost320 = 1;
+ for(const k of ['platforms', 'ramps', 'blocks', 'surfaces', 'overheads']) for(const o of SPEC[k]) o.frost320 = 1;
  for(const o of SPEC.platforms) if(o.badge == null) o.badge = '';
 
  // ---------------- 雪夜美术 ----------------
@@ -20943,10 +21396,81 @@ const FROSTCITY320 = (()=>{
   fillR(c, '#c9a64a', x + w / 2 - 3, tY + h / 2 - 3, 6, 6);
   c.strokeStyle = 'rgba(20,24,30,.7)'; c.lineWidth = 1.5; c.strokeRect(x + .75, yT + .75, w - 1.5, H - 1.5);
  }
+ // 3.9.0 F：公寓二楼外廊（南立面）——混凝土走廊板 + 立柱 + 栏杆，东端阳台沿刷黄黑警示
+ function paintGallery(c, p, top, S){
+  const {x, y, w, h} = p, yT = y + h - top, edge = 12;
+  if(S > 0){
+   fillR(c, 'rgba(10,16,30,.35)', x + 8, y + h, w, 18);
+   // 外廊下方：一楼骑楼阴影 + 立柱
+   fillR(c, 'rgba(18,24,34,.62)', x, yT + edge, w, top - edge);
+   for(let xx = x + 18; xx < x + w - 30; xx += 72){fillR(c, '#3a4048', xx + 18, yT + edge + 14, 26, top - edge - 30); fillR(c, 'rgba(255,206,110,.5)', xx + 21, yT + edge + 17, 20, top - edge - 36);}
+   for(let xx = x + 6; xx <= x + w - 14; xx += 72){const g = c.createLinearGradient(xx, 0, xx + 12, 0); g.addColorStop(0, '#8d949b'); g.addColorStop(1, '#5c636b'); c.fillStyle = g; c.fillRect(xx, yT + edge, 12, top - edge);}
+   // 走廊板前沿
+   fillR(c, '#6c747c', x, yT, w, edge); fillR(c, 'rgba(230,238,248,.55)', x, yT, w, 2.5); fillR(c, 'rgba(10,14,22,.45)', x, yT + edge - 3, w, 3);
+  }
+  const tY = y - top;
+  fillR(c, '#8e979f', x, tY, w, h);
+  c.strokeStyle = 'rgba(40,48,58,.35)'; c.lineWidth = 1; c.beginPath(); for(let xx = x + 48; xx < x + w; xx += 48){c.moveTo(xx, tY); c.lineTo(xx, tY + h);} c.stroke();
+  fillR(c, 'rgba(60,66,74,.5)', x, tY, w, 5);
+  // 南侧栏杆（只画立杆和扶手，不挡路）；东端 40 留空成阳台口
+  c.strokeStyle = '#2c3138'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(x + 2, tY + h - 4); c.lineTo(x + w - 40, tY + h - 4); c.stroke();
+  for(let xx = x + 4; xx < x + w - 40; xx += 16){fillR(c, '#3a4048', xx, tY + h - 16, 2, 13);}
+  c.beginPath(); c.moveTo(x + 2, tY + h - 16); c.lineTo(x + w - 40, tY + h - 16); c.stroke();
+  hazard(c, x + w - 8, tY, 8, h);
+ }
+ // 3.9.0 F：路口信号灯龙门架——两根镀锌立柱、箱形横梁（顶面钢格栅可站人）、朝南三组信号灯 + 路牌
+ function paintGantry(c, p, top, S){
+  const {x, y, w, h} = p, slab = (p.slab || 24), poles = SPEC.blocks.filter(b => b.art === 'fc_pole');
+  if(S > 0){
+   // 地面投影
+   c.fillStyle = 'rgba(8,12,24,.38)'; c.fillRect(x + 22, y + 26, w, h * .7);
+   for(const b of poles){const px = b.x + b.w / 2, py = b.y + b.h, ph = (p.bioH - slab) * S, inward = px < x + w / 2 ? 1 : -1;
+    fillR(c, 'rgba(8,12,24,.5)', px - 6, py - 3, 34, 9);
+    fillR(c, '#23282e', px - 13, py - 7, 26, 9); fillR(c, '#6f7880', px - 13, py - 7, 26, 2);
+    const g = c.createLinearGradient(px - 7, 0, px + 7, 0); g.addColorStop(0, '#dfe5ea'); g.addColorStop(.4, '#a3acb4'); g.addColorStop(1, '#565e66'); c.fillStyle = g; c.fillRect(px - 7, py - ph - 4, 14, ph);
+    fillR(c, 'rgba(255,255,255,.55)', px - 5, py - ph * .6, 3, ph * .35);
+    for(const k of [.25, .7]) fillR(c, '#4a5159', px - 7, py - ph * k, 14, 2);
+    // 柱顶斜撑
+    c.fillStyle = '#7d868e'; c.beginPath(); c.moveTo(px, py - ph * .78); c.lineTo(px + inward * 3, py - ph * .78); c.lineTo(px + inward * 26, py - ph - 2); c.lineTo(px, py - ph - 2); c.closePath(); c.fill();
+    // 立柱上的人行信号灯
+    fillR(c, '#1d2126', px - inward * 16 - 5, py - ph * .5, 10, 20); fillR(c, '#59d27a', px - inward * 16 - 3, py - ph * .5 + 12, 6, 6); fillR(c, 'rgba(120,40,30,.9)', px - inward * 16 - 3, py - ph * .5 + 3, 6, 6);
+   }
+   // 横梁南立面（24 厚）
+   const yF = y + h - top, fh = slab * S;
+   const gf = c.createLinearGradient(0, yF, 0, yF + fh); gf.addColorStop(0, '#59626b'); gf.addColorStop(1, '#30363d'); c.fillStyle = gf; c.fillRect(x, yF, w, fh);
+   for(let xx = x + 10; xx < x + w - 6; xx += 22){c.strokeStyle = 'rgba(200,210,220,.35)'; c.lineWidth = 1.2; c.beginPath(); c.moveTo(xx, yF + 1); c.lineTo(xx + 11, yF + fh - 1); c.lineTo(xx + 22, yF + 1); c.stroke();}
+   fillR(c, 'rgba(10,14,22,.6)', x, yF + fh - 2, w, 2);
+   // 三组朝南信号灯（悬挂于横梁下）+ 蓝色路牌
+   const heads = [x + w * .3, x + w * .5, x + w * .7];
+   heads.forEach((hx, k) => {
+    fillR(c, '#20242a', hx - 1.5, yF + fh, 3, 5);
+    fillR(c, '#15181c', hx - 8, yF + fh + 5, 16, 38); fillR(c, '#2b3036', hx - 8, yF + fh + 5, 16, 2);
+    const lit = k === 1 ? 2 : 0;
+    ['#e0473c', '#e8b13a', '#4fd27a'].forEach((col, i) => {const cy = yF + fh + 12 + i * 11; c.fillStyle = i === lit ? col : 'rgba(70,74,80,.9)'; c.beginPath(); c.arc(hx, cy, 4, 0, Math.PI * 2); c.fill(); fillR(c, '#0b0d10', hx - 6, cy - 6, 12, 2);});
+   });
+   fillR(c, '#1f5fa8', x + w * .38 - 22, yF + fh + 6, 30, 14); c.strokeStyle = '#e8f0fa'; c.lineWidth = 1; c.strokeRect(x + w * .38 - 21, yF + fh + 7, 28, 12);
+   c.font = 'bold 8px sans-serif'; c.textAlign = 'center'; c.fillStyle = '#f2f6fb'; c.fillText('雾城路', x + w * .38 - 7, yF + fh + 16);
+  }
+  // 顶面：钢格栅检修走道 + 北侧护栏 + 两端警示
+  const tY = y - top;
+  fillR(c, '#59626b', x, tY, w, h);
+  c.strokeStyle = 'rgba(24,30,38,.7)'; c.lineWidth = 1; c.beginPath();
+  for(let xx = x + 4; xx < x + w; xx += 7){c.moveTo(xx, tY + 6); c.lineTo(xx, tY + h - 6);} for(let yy = tY + 8; yy < tY + h - 4; yy += 12){c.moveTo(x + 2, yy); c.lineTo(x + w - 2, yy);} c.stroke();
+  fillR(c, '#3a4148', x, tY, w, 5); fillR(c, '#3a4148', x, tY + h - 5, w, 5);
+  hazard(c, x, tY, 8, h); hazard(c, x + w - 8, tY, 8, h);
+  c.strokeStyle = '#c3cbd2'; c.lineWidth = 2; c.beginPath(); c.moveTo(x + 10, tY + 3); c.lineTo(x + w - 10, tY + 3); c.stroke();
+  for(let xx = x + 12; xx < x + w - 8; xx += 28) fillR(c, '#9aa3ab', xx, tY - 6, 3, 10);
+  if(S === 0){for(const b of poles){c.fillStyle = '#8d969e'; c.beginPath(); c.arc(b.x + b.w / 2, b.y + b.h / 2, 9, 0, Math.PI * 2); c.fill();} for(const f of [.3, .5, .7]){c.fillStyle = '#e0473c'; c.beginPath(); c.arc(x + w * f, y + h - 8, 5, 0, Math.PI * 2); c.fill();}}
+ }
+ // 横梁顶面钢格栅的局部 hazard（与 IndustrialArt281 同款，这里自带一份避免跨模块依赖）
+ function hazard(c, x, y, w, h){c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip(); fillR(c, '#d6a93a', x, y, w, h); c.strokeStyle = '#2d2a22'; c.lineWidth = 4; c.beginPath(); for(let i = -h - 20; i < w + h + 20; i += 12){c.moveTo(x + i, y); c.lineTo(x + i + h, y + h);} c.stroke(); c.restore();}
  {
   const paint0 = IndustrialArt281.paint, surface0 = IndustrialArt281.surface;
   IndustrialArt281.paint = function(c, p, topLift, baseLift, R, S){
    if(p.frost320 && p.art === 'clocktower'){paintClock(c, p, topLift, baseLift); return true;}
+   if(p.frost320 && p.art === 'fc_gallery'){paintGallery(c, p, topLift, S || 0); return true;}
+   if(p.frost320 && p.art === 'fc_gantry'){paintGantry(c, p, topLift, S || 0); return true;}
+   if(p.frost320 && p.art === 'fc_pole') return true; // 立柱由龙门架整体绘制
    return paint0.apply(this, arguments);
   };
   IndustrialArt281.surface = function(c, s, R){
@@ -20986,10 +21510,161 @@ const FROSTCITY320 = (()=>{
   for(const [x, y] of SPEC.lamps) if(inV(x, y, 40)){fillR(c, 'rgba(10,14,20,.5)', x - 6, y - 2, 14, 8); fillR(c, '#30363e', x - 4, y - 6, 8, 8); fillR(c, '#ffd88a', x - 3, y - 5, 6, 4);}
   if(ov){
    c.font = 'bold 72px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
-   for(const f of [{n: 'A', x: 768, y: 620}, {n: 'C', x: 1600, y: 1600}, {n: 'D', x: 2640, y: 560}, {n: 'E', x: 576, y: 2528}, {n: 'B', x: 2656, y: 2496}]){c.fillStyle = 'rgba(8,14,30,.6)'; c.fillText(f.n, f.x + 4, f.y + 4); c.fillStyle = '#e6f0ff'; c.fillText(f.n, f.x, f.y);}
+   for(const f of [{n: 'F', x: 960, y: 1600}, {n: 'A', x: 768, y: 620}, {n: 'C', x: 1600, y: 1600}, {n: 'D', x: 2640, y: 560}, {n: 'E', x: 576, y: 2528}, {n: 'B', x: 2656, y: 2496}]){c.fillStyle = 'rgba(8,14,30,.6)'; c.fillText(f.n, f.x + 4, f.y + 4); c.fillStyle = '#e6f0ff'; c.fillText(f.n, f.x, f.y);}
   }
   c.restore();
  };
+ // ---------------- 3.9.0 F 信号灯架：规则与 AI ----------------
+ // 物理不改：跳跃冲量/重力/速度全部沿用。
+ // 1) NPC 人类按难度有起跳成功率：失手 = 提前起跳（真的掉下去），之后走长路回来或改去别的据点。
+ // 2) 3.9.1：僵尸也从同一外廊助跑飞扑（满速能跳上去，或在空中够到架上的人直接感染）。
+ //    助跑中被子弹打中 → 减速，起跳距离不够；空中被打中 → 被击退掉下去（Z391）。
+ const fc390 = (()=>{
+  const GS = SPEC.overheads[0], LINK = SPEC.links.find(e => e.runup390), RATE = [.35, .5, .65, .8, .9, .96];
+  const stats = {assigned: 0, approaches: 0, rolledFail: 0, jumps: 0, success: 0, fail: 0, retries: 0, reroutes: 0, swaps: 0, runups: 0, zApproach: 0, zJumps: 0, zLanded: 0, zFell: 0, zAirHits: 0, zRunHits: 0, zAirClaws: 0};
+  const on = () => world?.arena?.id === ID && !!world.arena.gantry391;
+  const fortIndex = () => world.arena.forts.findIndex(f => f.surfaceId === GANTRY);
+  const moveOf = w => w ? w.def.move : 1.02;
+  const fullSpeed = a => 232 * moveOf(a.wpn) * (a.moveSpeed || 1) * (a.boost > 60 ? 1.07 : 1);
+  const best = a => {let i = a.inv.cur, m = moveOf(a.wpn); for(const k of [0, 1]){const w = a.inv.w[k]; if(w && w.def.move > m + 1e-6){m = w.def.move; i = k;}} return {i, m};};
+  // 实测满速可达距离 ≈ 0.70 × 速度（起跳边缘 → 下落经过 176 高度），NPC 只在至少差不多够得着时才去试
+  const canTry = a => best(a).m * 232 * (a.moveSpeed || 1) * .7 >= GAP390 + 2;
+  function clearPlan(a){const ai = a.ai; if(!ai) return; ai.path = null; ai.goal = null; ai.bioEdge = null; ai.bioRunup = null;
+   try{const st = BioDefense2712.state(a); st.anchor = null; st.goal = null; st.next = 0;}catch(e){}
+   try{const hs = BioHumanAI.state(a); hs.goal = null;}catch(e){}}
+  function reroute(a){
+   const forts = world.arena.forts; let bi = -1, bd = Infinity;
+   for(let i = 0; i < forts.length; i++){const f = forts[i]; if(f.surfaceId === GANTRY) continue;
+    const n = G.actors.filter(o => o !== a && o.alive && !o.zombie && o.fortIndex === i).length; if(n >= (f.capacity || 8)) continue;
+    const d = dist(a.x, a.y, f.x, f.y); if(d < bd){bd = d; bi = i;}}
+   if(bi < 0) return false;
+   a.fortIndex = bi; a.holdSlot = G.actors.filter(o => o !== a && o.alive && !o.zombie && o.fortIndex === bi).length % forts[bi].slots.length;
+   if(a.g390swap && a.inv.w[0]){switchWeapon(a, 0); a.g390swap = false;}
+   a.ai.g390 = null; clearPlan(a); stats.reroutes++; return true;
+  }
+  // 回合开始：随机挑 4 个够得着的 NPC 去 F（槽位 0–3），其余分配不变
+  function assign(){
+   const fi = fortIndex(); if(fi < 0) return;
+   const pool = G.actors.filter(a => a.ai && !a.isPlayer && a.alive && !a.zombie && canTry(a));
+   for(let i = pool.length - 1; i > 0; i--){const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]];}
+   const cap = world.arena.forts[fi].capacity || 4;
+   pool.slice(0, cap).forEach((a, k) => {a.fortIndex = fi; a.holdSlot = k; stats.assigned++;});
+   for(const a of G.actors){a.g390fails = 0; a.g390swap = false; if(a.ai) a.ai.g390 = null;}
+  }
+  // NPC 起跳：返回移动向量、'jump'（交给 routeMove 原生起跳）或 null（交还原生移动）
+  function npcJump(a, e){
+   const ai = a.ai; if(!ai || a.bioAir) return null;
+   const dx = e.b.x - e.a.x, dy = e.b.y - e.a.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+   const along = (e.a.x - a.x) * ux + (e.a.y - a.y) * uy, lat = (a.x - e.a.x) * -uy + (a.y - e.a.y) * ux;
+   if(along > 220) return null;
+   let s = ai.g390;
+   if(!s || s.edge !== e || G.time > s.until || G.time < s.at){
+    if(!canTry(a)){reroute(a); return [0, 0];}
+    s = ai.g390 = {edge: e, at: G.time, until: G.time + 9, roll: Math.random() < (RATE[hLv388()] ?? .65), early: 20 + Math.random() * 28, phase: 'run', runs: 0};
+    stats.approaches++; if(!s.roll) stats.rolledFail++;
+   }
+   // CF 式：跳之前切到跑得最快的枪
+   const b = best(a); if(b.i !== a.inv.cur && b.i >= 0){switchWeapon(a, b.i); a.g390swap = b.i !== 0; stats.swaps++;}
+   const steer = k => {const n = Math.hypot(ux - uy * -lat * k, uy + ux * -lat * k) || 1; return [(ux - uy * -lat * k) / n, (uy + ux * -lat * k) / n];};
+   const back = {x: e.a.x - ux * 150, y: e.a.y - uy * 150};
+   if(s.phase === 'back'){
+    if(dist2(a.x, a.y, back.x, back.y) > 10 ** 2 && along < 148) return [back.x - a.x, back.y - a.y];
+    s.phase = 'run';
+   }
+   // 落点被占（刚上去的人还站在西端）就先在助跑距离外等
+   const busy = G.actors.some(o => o !== a && o.alive && !o.zombie && o.bioSurface === GANTRY && o.x < GANTRY_X0 + 44);
+   if(busy){if(along > 120) return [0, 0]; s.phase = 'back'; return [back.x - a.x, back.y - a.y];}
+   const v = a.vx * ux + a.vy * uy;
+   if(along < 95 && v < fullSpeed(a) * .92){
+    if(++s.runs > 4){reroute(a); return [0, 0];}
+    s.phase = 'back'; stats.runups++; return [back.x - a.x, back.y - a.y];
+   }
+   if(along <= (s.roll ? 2.5 : s.early)){s.jumped = true; s.phase = 'air'; s.until = G.time + 3; stats.jumps++; return 'jump';}
+   return steer(.06);
+  }
+  // 起跳后落地：成功 → 切回主枪；失败 → 准备阶段时间够就走长路再来，否则改去别的据点
+  function landed(a){
+   const s = a.ai.g390; a.ai.g390 = null;
+   if(a.bioSurface === GANTRY){stats.success++; if(a.g390swap && a.inv.w[0]){switchWeapon(a, 0); a.g390swap = false;} return;}
+   stats.fail++; a.g390fails = (a.g390fails || 0) + 1;
+   const m = G.modeState;
+   if(m.phase === 'prep' && m.remaining > 9 && a.g390fails < 2 && a.fortIndex === fortIndex()){stats.retries++; clearPlan(a); return;}
+   if(a.fortIndex === fortIndex()) reroute(a); else clearPlan(a);
+  }
+  // 3.9.1 僵尸飞扑：外廊上直线助跑到边缘起跳（不后退重跑：一旦被打减速就带着不够的速度起跳）
+  const ZBACK = 110;
+  function zombieJump(a, e){
+   const ai = a.ai; if(!ai || a.bioAir) return null;
+   const dx = e.b.x - e.a.x, dy = e.b.y - e.a.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+   const along = (e.a.x - a.x) * ux + (e.a.y - a.y) * uy, lat = (a.x - e.a.x) * -uy + (a.y - e.a.y) * ux;
+   if(along > 200) return null;
+   let s = ai.z391;
+   if(!s || s.edge !== e || G.time > s.until || G.time < s.at){s = ai.z391 = {edge: e, at: G.time, until: G.time + 8, phase: 'run', runs: 0, hit: false}; stats.zApproach++;}
+   if(a.slowUntil > G.time && !s.hit){s.hit = true; stats.zRunHits++;}
+   const steer = () => {const k = .06, n = Math.hypot(ux - uy * -lat * k, uy + ux * -lat * k) || 1; return [(ux - uy * -lat * k) / n, (uy + ux * -lat * k) / n];};
+   const back = {x: e.a.x - ux * ZBACK, y: e.a.y - uy * ZBACK};
+   if(s.phase === 'back'){
+    if(!s.hit && dist2(a.x, a.y, back.x, back.y) > 10 ** 2 && along < ZBACK - 4) return [back.x - a.x, back.y - a.y];
+    s.phase = 'run';
+   }
+   const v = a.vx * ux + a.vy * uy;
+   // 没被打、只是被挤慢了（或从侧面进来）→ 退回去重新助跑；被打过就不重跑，硬跳
+   if(!s.hit && along < 60 && v < fullSpeed(a) * .9 && s.runs < 2 && !G.actors.some(o => o !== a && o.alive && o.zombie && !o.bioAir && o.bioSurface === e.from && ((a.x - o.x) * -ux + (a.y - o.y) * -uy) > 0 && ((a.x - o.x) * -ux + (a.y - o.y) * -uy) < ZBACK && Math.abs((o.x - a.x) * -uy + (o.y - a.y) * ux) < 30)){s.runs++; s.phase = 'back'; return [back.x - a.x, back.y - a.y];}
+   if(along <= 8){s.jumped = true; s.phase = 'air'; s.until = G.time + 3; s.v0 = v; stats.zJumps++; return 'jump';}
+   return steer();
+  }
+  // 空中被子弹打中：前冲速度清零并反向一点，落不到架上（只在这段飞扑里生效）
+  function zombieAirHit(t){
+   const s = t.pounce391; if(!on() || !t.zombie || !t.bioAir || !s) return;
+   const e = LINK, dx = e.b.x - e.a.x, dy = e.b.y - e.a.y, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+   const v = t.vx * ux + t.vy * uy; if(v > -40){t.vx -= ux * (v + 40); t.vy -= uy * (v + 40);}
+   const px = (t.hitPushX || 0) * ux + (t.hitPushY || 0) * uy; if(px > 0){t.hitPushX -= ux * px; t.hitPushY -= uy * px;}
+   t.bioAirHitUntil = Math.max(t.bioAirHitUntil || 0, G.time + .6); s.knocked = true; stats.zAirHits++;
+  }
+  // 飞扑：起跳速度就是整段飞行的上限（空中不能再加速）；起跳前 0.55 秒内中过弹 → 起跳速度最多 80%（够不着）
+  const ULX = (LINK.b.x - LINK.a.x) / Math.hypot(LINK.b.x - LINK.a.x, LINK.b.y - LINK.a.y), ULY = (LINK.b.y - LINK.a.y) / Math.hypot(LINK.b.x - LINK.a.x, LINK.b.y - LINK.a.y);
+  const RUN_HIT_WINDOW = .55, RUN_HIT_CAP = .8;
+  function pounceStart(a){
+   const v = Math.max(0, a.vx * ULX + a.vy * ULY), hit = G.time - (a.lastHitT ?? -9) < RUN_HIT_WINDOW && a.lastHitBy && !a.lastHitBy.zombie;
+   const cap = hit ? Math.min(v, fullSpeed(a) * RUN_HIT_CAP) : v;
+   if(hit){stats.zRunHits++; const k = v > cap ? cap / v : 1; a.vx *= k; a.vy *= k;}
+   a.pounce391 = {at: G.time, x: a.x, v0: v, cap, runHit: hit}; stats.zJumpsAll = (stats.zJumpsAll || 0) + 1;
+  }
+  function pounceAir(a){
+   const s = a.pounce391, v = a.vx * ULX + a.vy * ULY;
+   // 本帧移动已经用了被操控加速过的速度：超出部分连同位移一起退回
+   if(v > s.cap){const d = v - s.cap, dt = Math.min(.05, G.time - (s.t || s.at) || 1 / 60); a.vx -= ULX * d; a.vy -= ULY * d; if(s.t) {a.x -= ULX * d * dt; a.y -= ULY * d * dt;}}
+   s.t = G.time;
+   // AI：预判 0.22 秒后的位置，够得着架上的人就在空中出爪
+   if(a.ai && a.cd <= 0 && G.modeState.phase === 'fight'){
+    const fx = a.x + a.vx * .22, fy = a.y + a.vy * .22, fz = BioPlatforms.height(a) + (a.bioVz || 0) * .22 - 450 * .0484;
+    for(const t of G.actors){if(!t.alive || t.zombie || t.bioSurface !== GANTRY) continue;
+     if(Math.hypot(t.x - fx, t.y - fy) < 24 + t.r && Math.abs(fz - BioPlatforms.height(t)) <= 34){a.ang = Math.atan2(t.y - a.y, t.x - a.x); infectionAttack(a); s.claw = true; stats.zAirClaws++; break;}}
+   }
+  }
+  const step0 = BioPlatforms.step;
+  BioPlatforms.step = function(a, dt){
+   const surf = a.bioSurface, out = step0.call(this, a, dt);
+   if(on()){
+    if(a.zombie){
+     // 从外廊起跳（玩家或 AI）→ 记一次飞扑；落地时统计上没上去
+     if(!a.pounce391 && a.bioAir && surf === LINK.from && G.time - (a.bioJumpAt ?? -9) < .1) pounceStart(a);
+     if(a.pounce391 && a.bioAir) pounceAir(a);
+     if(a.pounce391 && !a.bioAir){if(a.bioSurface === GANTRY) stats.zLanded++; else stats.zFell++; a.pounce391 = null; if(a.ai) a.ai.z391 = null;}
+    }
+    else if(a.ai?.g390?.jumped && !a.bioAir) landed(a);
+   }
+   return out;
+  };
+  const round0 = startInfectionRound;
+  startInfectionRound = function(){const out = round0.apply(this, arguments); if(on()) assign(); return out;};
+  return {stats, npcJump, zombieJump, zombieAirHit, assign, reroute, canTry, fortIndex, gap: GAP390, gantry: GS, link: LINK};
+ })();
+ if(typeof window !== 'undefined') window.FC390 = fc390;
+ {
+  const build0 = api.build;
+  api.build = function(w, wall){const out = build0.apply(this, arguments); w.arena.gantry391 = GANTRY; return out;};
+ }
  BioAuthored279.maps.push(api);
  BioAuthored279.install();
  // 旧城高架 / 雾岭变电站退出生化地图列表（代码保留），旧存档自动迁移到雾城变电区
