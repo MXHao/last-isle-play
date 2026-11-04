@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0c1b24">
-<title>终局之岛 · 玩法重制版 3.9.5 · 战地规则</title>
+<title>终局之岛 · 玩法重制版 3.9.7 · 战地规则</title>
 <style>
 :root{
   --ink:#0c1b24;--ink2:#132a36;--ink3:#1d3b4a;--paper:#eef2ec;--muted:#8fa5a6;--signal:#ffc93c;--storm:#957bff;--danger:#ff5446;--ok:#6fdc8c;
@@ -650,7 +650,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="menu">
   <canvas id="menuMap"></canvas>
   <div class="mpanel">
-    <h1 class="title"><small>LAST ISLE · 3.9.5</small>终局之岛</h1>
+    <h1 class="title"><small>LAST ISLE · 3.9.7</small>终局之岛</h1>
     <p class="tagline" id="tagline">五十人空降一座孤岛。毒圈收紧，物资有限，只有一个人能离开。</p>
     <div class="islandinfo" id="islandinfo">正在生成岛屿…</div>
     <div id="modePicker" class="mode-picker"><button data-mode="br">大逃杀</button><button data-mode="battlefield">战场行动</button><button data-mode="tdm">团队竞技</button><button data-mode="infection">生化模式</button></div>
@@ -671,7 +671,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
       <button id="btnHelp">操作说明</button>
       <button id="btnCareer">生涯战绩</button>
     </div>
-    <p class="mfoot">玩法重制版 3.9.5 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
+    <p class="mfoot">玩法重制版 3.9.7 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
   </div>
 </div>
 
@@ -817,7 +817,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="fps" class="hidden"></div>
 
 <div id="loadoutPanel" class="modal hidden"><div class="sheet">
-<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.9.5</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
+<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.9.7</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
 <div class="armory-layout">
 <aside class="armory-loadout" aria-label="保存的背包">
 <h3 class="armory-section-title">我的配装 <small>保存在此设备</small></h3>
@@ -5226,7 +5226,9 @@ const BioConfig = (()=>{
   function get(){return G.mode==='infection'&&G.state!=='menu'&&!G.over&&G.modeState?.bioConfig||resolve();}
   function beginMatch(){G.bioAmmoConfig=G.mode==='infection'?resolveBioMatchAmmoConfig250(Settings):null;G.bioSetup255=G.mode==='infection'?Object.freeze(normalizeBioSetup255(Settings)):null;G.bioHealthConfig256=G.mode==='infection'?Object.freeze(normalizeBioHealthSettings256(Settings)):null;return G.bioAmmoConfig;}
   function beginRound(){G.modeState.bioConfig=Object.freeze({...resolve(),...G.bioAmmoConfig,...G.bioSetup255,...G.bioHealthConfig256});return G.modeState.bioConfig;}
-  function human(a){return DIFF[get().humanKey];}
+  // 3.9.7：生化模式人类 NPC 低两档（观光/新兵）单独加强命中与反应（只在生化模式生效；DIFF 本身不变，其它模式不受影响；不改武器数值）
+  const humans397={casual:Object.freeze({...DIFF.casual,aim:.44,react:[1.1,1.7],view:450,burst:2.2}),easy:Object.freeze({...DIFF.easy,aim:.27,react:[.8,1.3],view:520,burst:1.65})};
+  function human(a){const k=get().humanKey;return humans397[k]||DIFF[k];}
   function zombie(a){return zombies[get().zombieKey];}
   function forActor(a,config=get()){return resolveBioRoleAmmoConfig250(config,a);}
   function reserve(id,slot=0,config=get(),actor=G.player){return bioAmmoForWeapon242(id,slot,forActor(actor,config)).reserve;}
@@ -6113,7 +6115,7 @@ function aiThink(a) {
   G.agrid.query(a.x, a.y, view, t => {
     if (!t.alive || !isHostile(a, t) || (t.mode !== 'ground' && t.mode !== 'drive')) return;
     let d = dist2(a.x, a.y, t.x, t.y);
-    if (G.mode === 'infection' && !a.zombie && t.zombie && hLv388() >= 2 && Entry387.near(t, 150)) d *= hLv388() >= 3 ? .35 : .6;
+    if (G.mode === 'infection' && !a.zombie && t.zombie && hLv388() >= 1 && Entry387.near(t, 150)) d *= hLv388() >= 3 ? .35 : hLv388() >= 2 ? .6 : .8;
     if (d >= bd) return;
     // Bots perceive and fight other bots normally, including while the player spectates.
     if (!canSee(a, t, view * (t === ai.target ? 1.15 : 1))) return;
@@ -20795,7 +20797,8 @@ const Pounce392 = function(cfg){
   const px = (t.hitPushX || 0) * ULX + (t.hitPushY || 0) * ULY; if(px > 0){t.hitPushX -= ULX * px; t.hitPushY -= ULY * px;}
   t.bioAirHitUntil = Math.max(t.bioAirHitUntil || 0, G.time + .6); s.knocked = true; stats.zAirHits++;
  }
- const RUN_HIT_WINDOW = .55, RUN_HIT_CAP = .8;
+ // 3.9.7：起跳前中弹窗口 / 速度上限可按图配置（默认仍 .55 s / 80%，雾城 FC390 不走这里）
+ const RUN_HIT_WINDOW = cfg.runHitWindow ?? .55, RUN_HIT_CAP = cfg.runHitCap ?? .8;
  function pounceStart(a){
   const v = Math.max(0, a.vx * ULX + a.vy * ULY), hit = G.time - (a.lastHitT ?? -9) < RUN_HIT_WINDOW && a.lastHitBy && !a.lastHitBy.zombie;
   const cap = hit ? Math.min(v, fullSpeed(a) * RUN_HIT_CAP) : v;
@@ -20812,6 +20815,18 @@ const Pounce392 = function(cfg){
     if(Math.hypot(t.x - fx, t.y - fy) < 24 + t.r && Math.abs(fz - BioPlatforms.height(t)) <= 34){a.ang = Math.atan2(t.y - a.y, t.x - a.x); infectionAttack(a); s.claw = true; stats.zAirClaws++; break;}}
   }
  }
+ // 3.9.7 落地未稳：飞扑刚落到目标台面 cfg.landWindow 秒内、离台沿 cfg.landEdge px 以内被人类子弹打中 → 向起跳方向倒飞摔下去（只在配置了 landWindow 的图生效）
+ function landStep(a){
+  const L = a.land397; if(!a.alive || a.bioAir || a.bioSurface !== TO || G.time - L.at > cfg.landWindow){a.land397 = null; return;}
+  const inward = (a.x - LINK.b.x) * ULX + (a.y - LINK.b.y) * ULY;
+  if(inward > (cfg.landEdge ?? 40)){a.land397 = null; return;}
+  if(!(a.lastHitT > L.at) || !a.lastHitBy || a.lastHitBy.zombie) return;
+  // 空中输入只能刹车，所以主要靠 hitPush（空中阻尼 3.5/s）把人推回缺口：约 0.38 s 滞空、后退约 110 px
+  const V = cfg.landKnockV ?? 240, P = cfg.landKnockPush ?? 420;
+  a.land397 = null; a.bioAir = true; a.bioVz = 170; a.bioSurface = null; a.vx = -ULX * V; a.vy = -ULY * V;
+  a.hitPushX = -ULX * P; a.hitPushY = -ULY * P; a.bioAirHitUntil = G.time + .6; if(a.ai){a.ai.path = null; a.ai.goal = null; a.ai.bioEdge = null;}
+  stats.zLandKnocks = (stats.zLandKnocks || 0) + 1;
+ }
  const step0 = BioPlatforms.step;
  BioPlatforms.step = function(a, dt){
   const surf = a.bioSurface, out = step0.call(this, a, dt);
@@ -20819,7 +20834,8 @@ const Pounce392 = function(cfg){
    if(a.zombie){
     if(!a.pounce391 && a.bioAir && surf === FROM && G.time - (a.bioJumpAt ?? -9) < .1) pounceStart(a);
     if(a.pounce391?.ctl === api && a.bioAir) pounceAir(a);
-    if(a.pounce391?.ctl === api && !a.bioAir){if(a.bioSurface === TO) stats.zLanded++; else stats.zFell++; a.pounce391 = null; if(a.ai) a.ai.z392 = null;}
+    if(a.pounce391?.ctl === api && !a.bioAir){if(a.bioSurface === TO){stats.zLanded++; if(cfg.landWindow) a.land397 = {at: G.time, ctl: api};} else stats.zFell++; a.pounce391 = null; if(a.ai) a.ai.z392 = null;}
+    if(a.land397?.ctl === api) landStep(a);
    }
    else if(a.ai?.p392?.jumped && !a.bioAir) landed(a);
   }else if(a.pounce391?.ctl === api && !a.bioAir) a.pounce391 = null;
@@ -20842,7 +20858,9 @@ const ST392 = (()=>{
  const LINK = {from: 'st_a_barb', to: 'st_a_deck', a: {x: 999, y: 664}, b: {x: 1164, y: 664}, jump: true, runup390: true, pounce392: true};
  const st = {raised: false, raisedAt: -9, fightAt: null, round: null, tickT: -1, saved: [], slab: null, plat: null, raises: 0};
  const on = () => world?.arena?.id === ID && !!world.arena.st392;
- const C = Pounce392({on: () => on() && st.raised, link: LINK, gap: 151, reachK: .7, back: 110});
+ // 3.9.7：瓮城台起跳前中弹窗口 .55 → .85 s、中弹后起跳速度上限 80% → 72%（守城楼的人更容易把飞扑打短；空中中弹照旧必掉）；
+ // 落地未稳 0.4 s 内、离桥头连接点 80 px 以内中弹 → 倒飞摔回缺口
+ const C = Pounce392({on: () => on() && st.raised, link: LINK, gap: 151, reachK: .7, back: 110, runHitWindow: .85, runHitCap: .72, landWindow: .4, landEdge: 80});
  function clearBridgePlans(){
   for(const a of G.actors){const ai = a.ai; if(!ai) continue;
    if(ai.bioEdge?.bridge392 || (ai.path || []).some?.(e => e?.bridge392)){ai.path = null; ai.goal = null; ai.bioEdge = null;}}
@@ -20977,9 +20995,13 @@ const Climb393 = function(cfg){
  const busy = a => G.actors.some(o => o !== a && o.alive && o.climb393 && o.climb393.ctl === api);
  // 梯子脚下：站在 LINK.from 那一层（地面或台面）上、高度等于 z0
  const atFoot = a => Math.abs(BioPlatforms.height(a) - (cfg.z0 || 0)) < 2 && (a.bioSurface || null) === (LINK.from || null);
+ // 3.9.7：梯脚中弹硬直——僵尸被人类子弹打中后 cfg.footStun 秒内不能开爬（默认 0 = 不启用）
+ const footStunned = a => !!(cfg.footStun && a.zombie && a.lastHitBy && !a.lastHitBy.zombie && G.time - (a.lastHitT ?? -9) < cfg.footStun);
  function start(a){
   if(a.climb393 || a.bioAir || !atFoot(a) || busy(a)) return false;
-  a.climb393 = {t0: G.time, ctl: api, dmg: 0}; a.x = LINK.a.x; a.y = LINK.a.y; a.vx = a.vy = 0; a.hitPushX = a.hitPushY = 0;
+  if(footStunned(a)){stats.footStuns = (stats.footStuns || 0) + 1; return false;}
+  // 3.9.7：僵尸爬梯时长可单独配置（cfg.zT，默认同 cfg.T）
+  a.climb393 = {t0: G.time, ctl: api, dmg: 0, T: a.zombie ? (cfg.zT ?? cfg.T) : cfg.T}; a.x = LINK.a.x; a.y = LINK.a.y; a.vx = a.vy = 0; a.hitPushX = a.hitPushY = 0;
   stats.climbs++; if(a.zombie) stats.zClimbs++; else stats.hClimbs++; return true;
  }
  function finish(a){
@@ -21003,19 +21025,33 @@ const Climb393 = function(cfg){
   if(k < g.kA){const f = k / g.kA; return {x: LINK.a.x + nx * g.d1 * f, y: LINK.a.y + ny * g.d1 * f, z: cfg.z0 + (cfg.z1 - cfg.z0) * f};}
   const f = (k - g.kA) / (1 - g.kA || 1), d = g.d1 + (g.L - g.d1) * f; return {x: LINK.a.x + nx * d, y: LINK.a.y + ny * d, z: cfg.z1};
  };
- // 被打下梯子时如果身体已经伸进目标台面的范围（高度还没到台面），沿梯子退回到台面边缘外再摔下去
- function clearOfTarget(a){
-  const t = world.arena.platforms.find(p => p.sid === LINK.to), r = (a.r || 17) + 1; if(!t) return;
-  const inside = () => a.x > t.x - r && a.x < t.x + t.w + r && a.y > t.y - r && a.y < t.y + t.h + r;
-  for(let i = 0; i < 80 && inside(); i++){a.x -= ux / UL * 2; a.y -= uy / UL * 2;}
+ // 3.9.6：被打下梯子不再瞬移。3.9.5 在翻台沿（第②段）被打下时会先一帧退出目标台面范围（clearOfTarget，最多约 30 px）再摔，画面上一弹。
+ // 现在从当前位置沿梯子向外平滑后退（RETREAT px/s，和摔落后的击退速度一样），高度按重力连续下落；身体一离开台面范围就转成普通空中摔落，
+ // 速度、高度都接着用，所以整条位置曲线连续。后退的这一小段（最多约 0.2 s）仍算占着梯子（climb393.falling），不会被再次击落，遮挡同爬梯。
+ const RETREAT = 150;
+ function insideTarget(a){
+  const t = world.arena.platforms.find(p => p.sid === LINK.to), r = (a.r || 17) + 1; if(!t) return false;
+  return a.x > t.x - r && a.x < t.x + t.w + r && a.y > t.y - r && a.y < t.y + t.h + r;
+ }
+ function release(a, vz){
+  a.climb393 = null; a.bioAir = true; a.bioVz = vz; a.bioSurface = null; a.hitPushX = -ux / UL * RETREAT; a.hitPushY = -uy / UL * RETREAT; a.bioAirHitUntil = G.time + .6;
  }
  function knock(a){
-  const c = a.climb393; if(!c) return; a.climb393 = null; stats.knocked++; clearOfTarget(a);
-  a.bioAir = true; a.bioVz = 60; a.bioSurface = null; a.hitPushX = -ux / UL * 150; a.hitPushY = -uy / UL * 150; a.bioAirHitUntil = G.time + .6;
+  const c = a.climb393; if(!c || c.falling) return; stats.knocked++;
   if(a.ai){a.ai.path = null; a.ai.goal = null; a.ai.bioEdge = null;}
+  if(insideTarget(a)){a.climb393 = {t0: c.t0, T: c.T, ctl: api, dmg: c.dmg, falling: {x: a.x, y: a.y, z: BioPlatforms.height(a), vz: 60}}; return;}
+  release(a, 60);
+ }
+ function fallStep(a, f, dt){
+  f.x -= ux / UL * RETREAT * dt; f.y -= uy / UL * RETREAT * dt;
+  // 身体还压在台面范围里时高度不低于台面（否则台面侧墙的碰撞会把人一帧推出去，又是一弹）
+  const t = world.arena.platforms.find(p => p.sid === LINK.to), floor = Math.max(cfg.z0 || 0, t && Number.isFinite(t.bioH) ? t.bioH : cfg.z1);
+  const z = Math.max(floor, f.z + f.vz * dt - .5 * BioPlatforms.gravity * dt * dt); f.vz = z > floor ? f.vz - BioPlatforms.gravity * dt : Math.min(0, f.vz - BioPlatforms.gravity * dt); f.z = z;
+  a.x = f.x; a.y = f.y; a.vx = a.vy = 0; a.hitPushX = a.hitPushY = 0; a.bioZ = f.z; a.bioVz = 0; a.bioAir = false; a.bioSurface = null;
+  if(!insideTarget(a)){a.x = f.x; a.y = f.y; a.bioZ = f.z; release(a, f.vz);}
  }
  // 子弹命中爬梯的僵尸（05_entities 调用）
- function hit(t, dmg){const c = t.climb393; if(!c || c.ctl !== api || !t.zombie) return; c.dmg += dmg || 0; if(c.dmg >= cfg.knock) knock(t);}
+ function hit(t, dmg){const c = t.climb393; if(!c || c.ctl !== api || !t.zombie || c.falling) return; c.dmg += dmg || 0; if(c.dmg >= cfg.knock) knock(t);}
  // AI：走到梯子脚下 → 开爬；梯子上有人就在脚下稍后的位置等
  function route(a, e){
   if(a.climb393) return [0, 0];
@@ -21033,7 +21069,8 @@ const Climb393 = function(cfg){
   const c = a.climb393;
   if(c && c.ctl === api){
    if(!on() || !a.alive){a.climb393 = null; return out;}
-   const k = (G.time - c.t0) / cfg.T;
+   if(c.falling){fallStep(a, c.falling, dt); return out;}
+   const k = (G.time - c.t0) / (c.T || cfg.T);
    if(k >= 1) finish(a);
    else{const p = pos(k, a); a.x = p.x; a.y = p.y; a.vx = a.vy = 0; a.bioZ = p.z; a.bioVz = 0; a.bioAir = false; a.bioSurface = null;}
   }
@@ -21047,10 +21084,11 @@ if(typeof window !== 'undefined') window.Climb393 = Climb393;
 
 // ---------------- 3.9.3 锈蚀水厂 A 水塔检修台：管道中段检修梯 ----------------
 // 唯一上法：地面 → 检修梯（x424，爬 1.6 s，一次一人）→ 单人宽贴墙管道（48 宽、限速 150）→ 检修台。原来的踏箱拆掉。
-// 僵尸同样爬这把梯子；爬梯时累计吃到 ≥ 100 点子弹伤害就被打下来（向南摔回地面），所以守住管道口就能拦住，但要持续开火。
+// 僵尸同样爬这把梯子（3.9.7 起僵尸爬 2.1 s）；爬梯时累计吃到 ≥ 60 点子弹伤害（3.9.6 为 100）就被打下来（向南摔回地面），所以守住管道口就能拦住，但要持续开火。
 const WW393 = (()=>{
  const ID = 'bio_waterworks', LINK = WATERWORKS281_SPEC.links.find(e => e.ladder393);
- const C = Climb393({on: () => world?.arena?.id === ID, link: LINK, z0: 0, z1: 128, T: 1.6, knock: 100});
+ // 3.9.7：僵尸爬梯 1.6 → 2.1 s（人类仍 1.6 s）；爬梯被打下的伤害阈值 100 → 60；梯脚中弹 0.4 s 内不能开爬
+ const C = Climb393({on: () => world?.arena?.id === ID, link: LINK, z0: 0, z1: 128, T: 1.6, zT: 2.1, knock: 60, footStun: .4});
  const map = BioWaterworks281, draw0 = map.draw;
  map.draw = function(c, w, overview = false, forceOblique = null){
   const out = draw0.apply(this, arguments);
