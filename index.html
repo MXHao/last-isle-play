@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0c1b24">
-<title>终局之岛 · 玩法重制版 3.9.7 · 战地规则</title>
+<title>终局之岛 · 玩法重制版 3.9.8 · 战地规则</title>
 <style>
 :root{
   --ink:#0c1b24;--ink2:#132a36;--ink3:#1d3b4a;--paper:#eef2ec;--muted:#8fa5a6;--signal:#ffc93c;--storm:#957bff;--danger:#ff5446;--ok:#6fdc8c;
@@ -650,7 +650,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="menu">
   <canvas id="menuMap"></canvas>
   <div class="mpanel">
-    <h1 class="title"><small>LAST ISLE · 3.9.7</small>终局之岛</h1>
+    <h1 class="title"><small>LAST ISLE · 3.9.8</small>终局之岛</h1>
     <p class="tagline" id="tagline">五十人空降一座孤岛。毒圈收紧，物资有限，只有一个人能离开。</p>
     <div class="islandinfo" id="islandinfo">正在生成岛屿…</div>
     <div id="modePicker" class="mode-picker"><button data-mode="br">大逃杀</button><button data-mode="battlefield">战场行动</button><button data-mode="tdm">团队竞技</button><button data-mode="infection">生化模式</button></div>
@@ -671,7 +671,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
       <button id="btnHelp">操作说明</button>
       <button id="btnCareer">生涯战绩</button>
     </div>
-    <p class="mfoot">玩法重制版 3.9.7 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
+    <p class="mfoot">玩法重制版 3.9.8 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
   </div>
 </div>
 
@@ -817,7 +817,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="fps" class="hidden"></div>
 
 <div id="loadoutPanel" class="modal hidden"><div class="sheet">
-<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.9.7</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
+<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.9.8</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
 <div class="armory-layout">
 <aside class="armory-loadout" aria-label="保存的背包">
 <h3 class="armory-section-title">我的配装 <small>保存在此设备</small></h3>
@@ -17021,6 +17021,36 @@ const BioDefense2712 = (()=>{
    for(const p of choices){if(!legalPoint(a,p,p.surfaceId)||crowd(a,p)>200)continue;const r=route(a,p);if(!safePath(a,p,r,threats)||!BioHold277.routeSafe(a,p))continue;const e=danger(a,p,threats);if(e<Math.max(1.25,current+.5))continue;const value=Math.min(3,e)*100-r.length*.14;if(!best||value>best.rank)best={...p,rank:value,kind:'retreat',key:'fort:'+fi+':'+p.slot,until:G.time+r.length/110+8};}
   }if(best){st.goal=best;st.anchor=null;H.state(a).goal=best;st.stats.escapes++;a.ai.path=null;a.ai.goal=null;a.ai.bioEdge=null;BioTactics.emit(a,'human_escape2712',{reason:'breach_no_safe_station',surface:a.bioSurface,to:best.surfaceId});return best;}st.stats.blockedEscapes++;return null;
  }
+ // 3.9.8 宽据点内出现僵尸（只在生化模式；当前只有黄沙古镇 A 城楼 896×352 满足「长边 ≥ 760 的矩形台面」）：
+ // 本台面上的人类 ≥ 2 人、僵尸也站在同一台面上、离自己还有 > close px 时，不跳下台面换据点，
+ // 而是退到台面上离僵尸最远的站位继续开火（路线不能贴着僵尸走）；被逼到 ≤ close（身体接触 43 + 约 0.12 s 冲刺）或只剩自己一人、两把枪都空了才按原规则撤离。
+ const Hold398={minSide:760,close:75,stats:{holds:0,moves:0,released:0},
+  wide(f){const s=deck(f.surfaceId);return !!s&&!s.topology2712&&Math.max(s.w,s.h)>=this.minSide;},
+  onDeck(o,sid){return o.alive&&!o.zombie&&(o.bioSurface===sid||o.bioAir&&FloorSystem.contains(deck(sid),o.x,o.y,0)&&P.height(o)>=deck(sid).bioH-48);},
+  keep(a,f,threats,weapon){this.why=null;
+   if(G.mode!=='infection'||a.bioAir||a.bioSurface!==f.surfaceId||!this.wide(f))return false;
+   if(weapon.phase==='both_dry'){this.why='dry';return false;}
+   const sid=f.surfaceId,onTop=threats.filter(t=>!t.air&&t.surface===sid);if(!onTop.length){this.why='off_deck';return false;}
+   let near=Infinity;for(const t of threats)if(t.surface===sid||t.air&&Math.abs((t.z||0)-P.height(a))<=60)near=Math.min(near,dist(a.x,a.y,t.x,t.y));
+   if(near<=this.close){this.why='close';return false;}
+   let n=0;for(const o of G.actors)if(this.onDeck(o,sid))n++;
+   if(n<2){this.why='alone';return false;}return true;
+  },
+  far(a,f,threats){
+   const sid=f.surfaceId,s=deck(sid),onTop=threats.filter(t=>t.surface===sid||t.air),gap=p=>Math.min(...onTop.map(t=>dist(p.x,p.y,t.x,t.y)));
+   const cand=f.slots.map((_,slot)=>({...point(a,f,slot),slot,fort:a.fortIndex,floor:0,bioUseLinks:true})).filter(p=>p.surfaceId===sid);
+   // 台面四角（内缩到身体 + 24）也作为候选，站位编号取最近的正式站位；离入口连接点 120 内的不用。
+   const e=entry(f),m=(a.r||17)+24;
+   for(const q of [[s.x+m,s.y+m],[s.x+s.w-m,s.y+m],[s.x+m,s.y+s.h-m],[s.x+s.w-m,s.y+s.h-m]]){const p={x:q[0],y:q[1]};if(dist2(p.x,p.y,e.x,e.y)<120**2)continue;
+    let k=0,kd=Infinity;f.slots.forEach((o,i)=>{const d=dist2(o.x,o.y,p.x,p.y);if(d<kd){kd=d;k=i;}});cand.push({...p,surfaceId:sid,slot:k,fort:a.fortIndex,floor:0,bioUseLinks:true,corner398:true});}
+   const here=gap(a);let best=null;
+   for(const p of cand){if(!legalPoint(a,p,sid)||crowd(a,p)>=900)continue;const g=gap(p);if(g<here+24)continue;
+    const r=route(a,p);if(!r||r.edges?.length||!safePath(a,p,r,threats))continue;
+    const v=g-dist(a.x,a.y,p.x,p.y)*.12-crowd(a,p)*.2+(state(a).anchor&&dist2(state(a).anchor.x,state(a).anchor.y,p.x,p.y)<28**2?30:0);
+    if(!best||v>best.v)best={...p,v};}
+   return best;
+  }
+ };
  // A newly observed close breach must not wait for the ordinary station
  // selection interval. The alert uses the observer's snapshots and a real
  // approach route; a nearby body behind mesh or on the ground is not enough.
@@ -17048,7 +17078,9 @@ const BioDefense2712 = (()=>{
   const c=choose(a,evading);
   if(c.best)return assign(a,c.best,evading?'local_cover':'front');
   const urgent=current<.85||weapon.phase==='both_dry'&&current<1.6||a.hp<35&&G.time-a.lastHitT<.8&&current<1.8;
-  if(urgent){const escape=outside(a,c,current);if(escape)return escape;}
+  if(urgent&&Hold398.keep(a,f,threats,weapon)){Hold398.stats.holds++;const p=Hold398.far(a,f,threats);if(p){Hold398.stats.moves++;return assign(a,p,'far_end398');}
+   if(c.fallback&&c.fallback.eta>current+.22)return assign(a,c.fallback,'local_pressure');return st.anchor||nativeHold.call(this,a);}
+  if(urgent){const escape=outside(a,c,current);if(escape){if(a.bioSurface===f.surfaceId&&Hold398.wide(f)){Hold398.stats.released++;const k='rel_'+(Hold398.why||'other');Hold398.stats[k]=(Hold398.stats[k]||0)+1;}return escape;}}
   // A marginal local fallback still permits retreat-fire; never freeze on the
   // original anchor merely because all ideal stations have been breached.
   if(c.fallback&&c.fallback.eta>current+.22)return assign(a,c.fallback,'local_pressure');
@@ -17076,7 +17108,7 @@ const BioDefense2712 = (()=>{
   if(!combat&&!c.fire&&Math.hypot(c.mx,c.my)>.12){const face=Math.atan2(c.my,c.mx),turn=7*(.7+a.ai.skill*.3);c.aim=a.ang+clamp(angDiff(a.ang,face),-turn*dt,turn*dt);state(a).stats.transitFacing++;}
   return out;
  };
- return {active,state,urgentReview,choose,eta,danger,legalPoint,edgeVariant,claimPoint,entry,version:'2.7.12-npc-v4b'};
+ return {active,state,urgentReview,choose,eta,danger,legalPoint,edgeVariant,claimPoint,entry,Hold398,version:'2.7.12-npc-v4b'};
 })();
 window.BioDefense2712=BioDefense2712;
 // END BIO2712 HUMAN DEFENSE AND TRANSIT
