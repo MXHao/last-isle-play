@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0c1b24">
-<title>终局之岛 · 玩法重制版 3.9.8 · 战地规则</title>
+<title>终局之岛 · 玩法重制版 3.9.9 · 战地规则</title>
 <style>
 :root{
   --ink:#0c1b24;--ink2:#132a36;--ink3:#1d3b4a;--paper:#eef2ec;--muted:#8fa5a6;--signal:#ffc93c;--storm:#957bff;--danger:#ff5446;--ok:#6fdc8c;
@@ -650,7 +650,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="menu">
   <canvas id="menuMap"></canvas>
   <div class="mpanel">
-    <h1 class="title"><small>LAST ISLE · 3.9.8</small>终局之岛</h1>
+    <h1 class="title"><small>LAST ISLE · 3.9.9</small>终局之岛</h1>
     <p class="tagline" id="tagline">五十人空降一座孤岛。毒圈收紧，物资有限，只有一个人能离开。</p>
     <div class="islandinfo" id="islandinfo">正在生成岛屿…</div>
     <div id="modePicker" class="mode-picker"><button data-mode="br">大逃杀</button><button data-mode="battlefield">战场行动</button><button data-mode="tdm">团队竞技</button><button data-mode="infection">生化模式</button></div>
@@ -671,7 +671,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
       <button id="btnHelp">操作说明</button>
       <button id="btnCareer">生涯战绩</button>
     </div>
-    <p class="mfoot">玩法重制版 3.9.8 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
+    <p class="mfoot">玩法重制版 3.9.9 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
   </div>
 </div>
 
@@ -817,7 +817,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="fps" class="hidden"></div>
 
 <div id="loadoutPanel" class="modal hidden"><div class="sheet">
-<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.9.8</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
+<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.9.9</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
 <div class="armory-layout">
 <aside class="armory-loadout" aria-label="保存的背包">
 <h3 class="armory-section-title">我的配装 <small>保存在此设备</small></h3>
@@ -6264,9 +6264,11 @@ function aiAct(a, dt) {
       if(BioPlatforms.active()&&a.bioSurface&&!a.bioAir)err=Math.min(err,D.aim/ai.skill*(.65+d/900));
       if (Math.random() < dt * 3) ai.aimTgt = (Math.random() + Math.random() - 1) * err;
       ai.aimOff = lerp(ai.aimOff, ai.aimTgt, 1 - Math.exp(-dt * 4));
-      face = ta + ai.aimOff;
+      // 3.9.9：像人的瞄准（发现/换目标的个人延迟、甩枪过冲、跟枪滞后、连射漂移），见 60_human399.js
+      const aim399 = typeof Human399 !== 'undefined' ? Human399.aim(a, t, ta, err, d, dt, vis) : null;
+      face = aim399 ? aim399.face : ta + ai.aimOff;
       ai.reactT -= dt;
-      if (vis && ai.reactT <= 0 && d < (w ? w.def.range * 0.95 : 60)) {
+      if (vis && ai.reactT <= 0 && !(aim399 && aim399.hold) && d < (w ? w.def.range * 0.95 : 60)) {
         const ad = Math.abs(angDiff(a.ang, face));
         let want = ad < (w && w.def.cls === 'sniper' ? 0.06 : 0.3);
         if (!BioHumanAI.active(a) && !(BioPlatforms.active()&&a.bioSurface&&w?.def.auto) && w && !w.def.spinUpSeconds && (w.def.auto || w.def.cls === 'pistol' || w.def.cls === 'dmr') && d > 110) {
@@ -17002,6 +17004,8 @@ const BioDefense2712 = (()=>{
   let value=(inRange.length?130:visible.length?65:ray(a,p,gate)?70:0)-Math.abs(eDist-ideal)*.33-dist(a.x,a.y,p.x,p.y)*.10-crowd(a,p);
   if(evading)value+=Math.min(2.6,etaValue)*65;
   if(state(a).anchor?.slot===p.slot)value+=24;
+  // 3.9.9 性格：激进靠前、谨慎靠后、跟风扎堆、独狼散开
+  if(window.Human399)value+=Human399.stationBias(a,p,eDist,ideal);
   // Fixed independent stream gives station variety without changing gun RNG.
   value+=(state(a).points.get('bias:'+p.slot)||0);return value;
  }
@@ -17077,7 +17081,7 @@ const BioDefense2712 = (()=>{
   if(weapon.phase==='both_dry'&&!BioHold277.combat(a)&&typeof BioSupplies!=='undefined'){const supply=BioSupplies.goalFor(a),r=supply&&route(a,supply);if(supply&&r&&safePath(a,supply,r,threats)&&BioHold277.routeSafe(a,supply)){const goal={...supply,kind:'supply',key:'supply:'+supply.bioSupplyId,bioUseLinks:true,until:G.time+r.length/110+8};hs.goal=goal;st.goal=goal;hs.stats.supplyStarted++;return goal;}}
   const c=choose(a,evading);
   if(c.best)return assign(a,c.best,evading?'local_cover':'front');
-  const urgent=current<.85||weapon.phase==='both_dry'&&current<1.6||a.hp<35&&G.time-a.lastHitT<.8&&current<1.8;
+  const urgent=current<.85*(window.Human399?Human399.urgentK(a):1)||weapon.phase==='both_dry'&&current<1.6||a.hp<35&&G.time-a.lastHitT<.8&&current<1.8;
   if(urgent&&Hold398.keep(a,f,threats,weapon)){Hold398.stats.holds++;const p=Hold398.far(a,f,threats);if(p){Hold398.stats.moves++;return assign(a,p,'far_end398');}
    if(c.fallback&&c.fallback.eta>current+.22)return assign(a,c.fallback,'local_pressure');return st.anchor||nativeHold.call(this,a);}
   if(urgent){const escape=outside(a,c,current);if(escape){if(a.bioSurface===f.surfaceId&&Hold398.wide(f)){Hold398.stats.released++;const k='rel_'+(Hold398.why||'other');Hold398.stats[k]=(Hold398.stats[k]||0)+1;}return escape;}}
@@ -21888,6 +21892,307 @@ if(typeof window !== 'undefined') window.FROSTCITY320 = FROSTCITY320;
 
 boot();
 
+// ---- 60_human399.js ----
+// 3.9.9 让 NPC 更像人：随机的是「风格」不是「强度」。
+// 所有随机都来自本模块自己的对局种子流（Human399.seed，每场开局定一次；?aiseed=数字 或 Human399.forceSeed 可固定），
+// 按「种子 × 角色编号 × 用途」分流，不消耗 Math.random，也不改武器数值、音效、据点几何、母体出生与单入口规则。
+// 人类：性格档案（生化）、像人的瞄准（全部模式）、个人反应延迟与决策惯性、不走直线（生化地面）、信息不完美。
+// 僵尸：硬冲（少观望）/ 绕路 / 骗跳 / 入口外等换弹（生化）。回血撤退（Zombie388）保持原样——提前打断它会让僵尸反复重选回血点，寻路失败变多。
+const Human399 = (()=>{
+ const TIER=['casual','easy','normal','hard','elite','nightmare'];
+ // 新据点（单入口特殊机关：吊桥/信号灯架/检修梯/升降台）不参与追击补刀与据点互换——上去难、下去很可能回不来。
+ const SPECIAL=new Set(['st_a_deck','st_a_bridge','st_a_barb','fc_f_gantry','ww_a_deck','ww_a_lane','obs_dome_top','obs_lift']);
+ const H={version:'3.9.9',on:true,seed:0,forceSeed:null,
+  stats:null,
+  // ---- 档位参数（index = 档位 0 观光 … 5 极限）----
+  // 瞄准：tau 跟枪滞后（s）、w/z 甩枪弹簧（角频率/阻尼比，阻尼 <1 即会过冲）、notice 发现目标后开始转身前的个人延迟、sw 换目标延迟、res 残余误差倍率（校准用）、drift 连射漂移
+  aimT:{tau:[.085,.08,.07,.055,.045,.04],w:[11,12.5,14,16,18,19],z:[.42,.46,.5,.55,.62,.66],notice:[.30,.25,.20,.15,.11,.09],sw:[.28,.23,.18,.14,.11,.09],res:[.72,.66,.70,.85,.90,.90],drift:[.30,.30,.32,.28,.26,.24]},
+  chaseT:[.35,.6,1,1,.8,.8],
+  pers:{
+   aggressive:{name:'激进',w:.22,chase:1,urgK:.8,ideal:-45,peer:0,lone:0,supply:0,react:.85,mem:2.4,pause:.015,hop:.035,weave:.30,rest:[1.2,4.5]},
+   cautious:{name:'谨慎',w:.22,chase:0,urgK:1.18,ideal:55,peer:0,lone:0,supply:.15,react:1.05,mem:1.6,pause:.07,hop:.01,weave:.22,rest:[3,8]},
+   follower:{name:'跟风',w:.2,chase:.15,urgK:1,ideal:0,peer:18,lone:0,supply:0,react:1.2,mem:1.8,pause:.04,hop:.02,weave:.26,rest:[2,7]},
+   lone:{name:'独狼',w:.16,chase:.45,urgK:.95,ideal:20,peer:0,lone:24,supply:0,react:.95,mem:2.1,pause:.035,hop:.025,weave:.38,rest:[1.5,6]},
+   greedy:{name:'贪补给',w:.2,chase:.3,urgK:1,ideal:0,peer:0,lone:0,supply:.45,react:1,mem:1.8,pause:.03,hop:.02,weave:.3,rest:[2,7]}
+  },
+  zstyles:{rush:{name:'硬冲',w:.35},flank:{name:'绕路',w:.25},feint:{name:'骗跳',w:.2},wait:{name:'等换弹',w:.2}}
+ };
+ const resetStats=()=>{H.stats={pers:{},zstyle:{},aim:{notice:0,switch:0},chase:{start:0,kill:0,infected:0,lost:0,threat:0,timeout:0,close:0,healed:0,returned:0,noReturn:0},
+  retreatDelayed:0,stationHeld:0,swaps:0,waypoints:0,waypointDone:0,waypointDrop:0,pauses:0,hops:0,weaveFrames:0,glances:0,
+  z:{feint:0,feintHop:0,wait:0,waitReload:0,waitTimeout:0,waitHit:0,flankFrames:0,rushSkip:0,rushHeal:0}};};
+ resetStats();
+ // ---- 种子流 ----
+ function mix(h,str){for(let i=0;i<str.length;i++)h=Math.imul(h^str.charCodeAt(i),0x01000193)>>>0;return h>>>0;}
+ // 对局种子：每场（G.matchId）第一次用到时定一次；forceSeed / ?aiseed= 可固定
+ function ensureSeed(){if(H.seedMatch!==G.matchId){H.seedMatch=G.matchId;H.seed=H.forceSeed!=null?H.forceSeed>>>0:(Math.random()*4294967296)>>>0;G.aiSeed399=H.seed;resetStats();}}
+ function rng(a,ch){
+  ensureSeed();let S=a.h399R;if(!S||S.seed!==H.seed||S.match!==G.matchId)S=a.h399R={seed:H.seed,match:G.matchId,ch:Object.create(null)};
+  let s=S.ch[ch];if(s===undefined)s=mix((H.seed^Math.imul(((a.modeIndex??0)|0)+1,0x85ebca6b))>>>0,String(ch));
+  s=S.ch[ch]=(s+0x6D2B79F5)>>>0;let t=Math.imul(s^(s>>>15),s|1);t^=t+Math.imul(t^(t>>>7),t|61);return ((t^(t>>>14))>>>0)/4294967296;
+ }
+ const rr=(a,ch,lo,hi)=>lo+(hi-lo)*rng(a,ch);
+ const gauss=(a,ch)=>{const u=Math.max(1e-9,rng(a,ch)),v=rng(a,ch);return Math.sqrt(-2*Math.log(u))*Math.cos(TAU*v);};
+ function pickW(a,ch,table){let x=rng(a,ch)*Object.values(table).reduce((s,p)=>s+p.w,0);for(const [k,p] of Object.entries(table)){x-=p.w;if(x<=0)return k;}return Object.keys(table)[0];}
+ const bio=()=>G.mode==='infection';
+ const npc=a=>!!(a&&a.ai&&!a.isPlayer);
+ function lv(a){
+  if(bio()&&typeof BioConfig!=='undefined'){const k=a?.zombie?BioConfig.get().zombieKey:BioConfig.get().humanKey;const i=TIER.indexOf(k);return i<0?2:i;}
+  if(a?.aiProfile){const p=a.aiProfile;const i=TIER.findIndex(k=>DIFF[k]===p);return i<0?3:i;}
+  const i=TIER.indexOf(G.diffKey);return i<0?2:i;
+ }
+ // ---- 性格档案 ----
+ function persOf(a){ensureSeed();let P=a.h399P;if(!P||P.match!==G.matchId||P.seed!==H.seed){const k=pickW(a,'personality',H.pers);H.stats.pers[k]=(H.stats.pers[k]||0)+1;P=a.h399P={match:G.matchId,seed:H.seed,key:k,...H.pers[k],
+   reactBase:rr(a,'react-base',.6,1.45),memJ:rr(a,'mem-j',.8,1.25),weaveLen:rr(a,'weave-len',170,380),weaveSide:rng(a,'weave-side')<.5?-1:1};}
+  return P;}
+ function zstyleOf(a){const round=G.modeState?.round||0;let Z=a.ai.h399Z;if(!Z||Z.round!==round||Z.life!==a.zombieSince399){
+   const k=pickW(a,'zstyle',H.zstyles);Z=a.ai.h399Z={round,life:a.zombieSince399,key:k,side:rng(a,'zflank-side')<.5?-1:1,flankAmp:rr(a,'zflank-amp',.38,.62),nextFeint:0,nextWait:0,phase:null,until:0,rushUntil:0,feints:0};
+   H.stats.zstyle[k]=(H.stats.zstyle[k]||0)+1;}
+  return Z;}
+ function st(a){let s=a.ai.h399;const round=G.modeState?.round||0;if(!s||s.match!==G.matchId||s.round!==round)s=a.ai.h399={match:G.matchId,round,aim:null,chase:null,chaseNext:0,chaseCool:0,ret:null,pend:null,last:null,lastKey:null,stationAt:-9,wp:null,wpLegs:0,pause:null,pauses:0,nextMove:0,glance:null,wasFire:false};return s;}
+ // 个人反应延迟：同一事件不同人在不同时刻反应
+ function delay(a,kind){const P=persOf(a),L=lv(a),base=(kind==='retreat'?[.30,.26,.22,.18,.15,.13]:H.aimT.notice)[L];return clamp(base*P.reactBase*P.react*rr(a,'delay-'+kind,.35,1.75),.03,.7);}
+
+ // ---- 2. 像人的瞄准（07_ai.js fight 分支调用；全部模式 NPC）----
+ H.aim=function(a,t,ta,err,d,dt,vis){
+  if(!H.on||!npc(a)||a.zombie)return null;const s=st(a),now=G.time,L=lv(a),T=H.aimT;let A=s.aim;
+  if(!A)A=s.aim={tgt:null,trk:ta,off:0,vel:0,res:0,drift:0,fireT:0,hold:0,lastSeen:-9};
+  if(A.tgt!==t){const quick=A.tgt&&A.tgt.alive&&now-A.lastSeen<.7,turn=Math.abs(angDiff(a.ang,ta));A.tgt=t;
+   // 换到几乎同方向的目标：不停顿，准星接着走；需要明显转身才有发现/换目标延迟
+   if(quick&&turn<.35){A.trk=ta;A.off=angDiff(ta,a.ang);H.stats.aim.near=(H.stats.aim.near||0)+1;}
+   else{A.trk=ta;A.off=angDiff(ta,a.ang);A.vel=0;A.drift*=.3;A.hold=now+(quick?T.sw[L]*rr(a,'aim-sw',.6,1.4):delay(a,'notice'));H.stats.aim[quick?'switch':'notice']++;}}
+  if(vis)A.lastSeen=now;
+  if(now<A.hold){A.off=angDiff(ta,a.ang);return {face:a.ang,hold:true};}
+  // 跟枪滞后：准星追的是一小段时间前的方位，目标横移时会落后
+  A.trk+=angDiff(A.trk,ta)*(1-Math.exp(-dt/T.tau[L]));
+  // 残余误差：与原版同尺度（err），由弹簧带过去 → 换点/甩枪时有过冲
+  if(rng(a,'aim-res-t')<dt*2.6)A.res=(rng(a,'aim-res')+rng(a,'aim-res')-1)*err*T.res[L];
+  const w=T.w[L],z=T.z[L],acc=-w*w*(A.off-A.res)-2*z*w*A.vel;A.vel+=acc*dt;A.off+=A.vel*dt;if(Math.abs(A.off)>Math.PI)A.off=angDiff(0,A.off);
+  // 连射漂移：持续开火越久准星越飘，松手后快速回正
+  const firing=s.wasFire;A.fireT=firing?Math.min(2.5,A.fireT+dt):Math.max(0,A.fireT-dt*3);
+  const sig=err*T.drift[L]*Math.min(1,A.fireT/1.2);A.drift+=gauss(a,'aim-drift')*sig*Math.sqrt(dt)*2.2-A.drift*dt*(firing?1.2:6);
+  return {face:A.trk+A.off+A.drift,hold:false};
+ };
+
+ // ---- 6. 信息不完美：枪声只给大概方向；看不见的目标几秒后忘掉 ----
+ function approx(a,x,y,t){const dx=x-a.x,dy=y-a.y,r=Math.hypot(dx,dy),ang=Math.atan2(dy,dx);
+  const b=ang+(rng(a,'snd-b')*2-1)*clamp(.12+r/2400,.12,.42),rad=Math.max(60,r*rr(a,'snd-r',.72,1.28));
+  return {x:a.x+Math.cos(b)*rad,y:a.y+Math.sin(b)*rad};}
+ function afterThink(a,prev){
+  const ai=a.ai,s=st(a),P=persOf(a),now=G.time;
+  if(ai.heard&&ai.heard!==prev.heard&&!ai.heard.h399){const p=approx(a,ai.heard.x,ai.heard.y,ai.heard.t);ai.heard={...ai.heard,x:p.x,y:p.y,h399:1};}
+  const mem=(bio()?P.mem:Math.max(3,P.mem*2))*P.memJ;
+  if(ai.target&&now-ai.seenT>mem){ai.target=null;if(ai.state==='chase')ai.state='objective';}
+ }
+
+ // ---- 生化人类：追击补刀 ----
+ function onOwnFort(a){const f=world.arena.forts?.[a.fortIndex||0];return f&&!a.bioAir&&a.bioSurface===f.surfaceId?f:null;}
+ function chaseGoalPoint(a,z){const d=dist(a.x,a.y,z.x,z.y)||1,k=Math.min(150,d*.6),p={x:z.x+(a.x-z.x)/d*k,y:z.y+(a.y-z.y)/d*k};
+  if(!z.bioSurface&&BioPlatforms.groundClear({x:p.x,y:p.y,r:a.r,bioZ:0},p)&&BioPlatforms.groundClear({x:z.x,y:z.y,r:a.r,bioZ:0},p))return {x:p.x,y:p.y,surfaceId:null,floor:0,bioUseLinks:true,kind:'chase399',key:'chase399'};
+  return {x:z.x,y:z.y,surfaceId:z.bioSurface||null,floor:0,bioUseLinks:true,kind:'chase399',key:'chase399'};}
+ function chaseTry(a,s){
+  const now=G.time;if(now<s.chaseNext)return;s.chaseNext=now+.5;
+  if(now<s.chaseCool||!BioHold277.active(a)||G.modeState.phase!=='fight')return;
+  const P=persOf(a),wgt=P.chase*H.chaseT[lv(a)];if(wgt<=0)return;
+  const f=onOwnFort(a);if(!f||SPECIAL.has(f.surfaceId))return;
+  const w=a.wpn;if(a.action||!w||w.mag<weaponMagazineCapacity(a.inv,w)*.35)return;
+  let mates=0;for(const o of G.actors)if(o!==a&&o.alive&&!o.zombie&&o.bioSurface===f.surfaceId)mates++;if(mates<2)return;
+  for(const o of G.actors)if(o!==a&&o.ai?.h399?.chase&&o.ai.h399.chase.fort===a.fortIndex)return;
+  const seen=[];G.agrid.query(a.x,a.y,720,o=>{if(o.alive&&o.zombie&&canSee(a,o,720))seen.push(o);});
+  let z=null;for(const o of seen){const d=dist(a.x,a.y,o.x,o.y);if(d>340||o.bioAir||o.bioSurface===f.surfaceId||o.hp>o.maxHp*.4)continue;
+   if(seen.some(q=>q!==o&&(dist2(q.x,q.y,o.x,o.y)<220**2||dist2(q.x,q.y,a.x,a.y)<260**2)))continue;z=o;break;}
+  if(!z)return;H.stats.chase.cand=(H.stats.chase.cand||0)+1;
+  if(rng(a,'chase-roll')>=.3*wgt)return;
+  const g=chaseGoalPoint(a,z);if(!BioHumanAI.route(a,g))return;
+  s.chase={z,fort:a.fortIndex,surf:f.surfaceId,at:now,lastSeen:now,lx:z.x,ly:z.y,ls:z.bioSurface||null,goal:g};H.stats.chase.start++;
+  a.ai.path=null;a.ai.goal=null;if(!a.bioAir)a.ai.bioEdge=null;
+ }
+ function chaseEnd(a,s,why){const c=s.chase;if(!c)return;H.stats.chase[why]=(H.stats.chase[why]||0)+1;s.chase=null;s.chaseCool=G.time+20;
+  if(why!=='infected')s.ret={fort:c.fort,surf:c.surf,at:G.time};a.ai.path=null;a.ai.goal=null;if(!a.bioAir)a.ai.bioEdge=null;
+  (H.log||(H.log=[])).push({t:+G.time.toFixed(2),id:a.modeIndex,why,dur:+(G.time-c.at).toFixed(2)});if(H.log.length>400)H.log.shift();}
+ function chaseStep(a,s){
+  const c=s.chase,now=G.time,z=c.z;if(!c)return;
+  if(a.zombie||!a.alive)return chaseEnd(a,s,'infected');
+  if(!z.alive||!z.zombie||z.hp<=0)return chaseEnd(a,s,'kill');
+  if(now-c.at>5)return chaseEnd(a,s,'timeout');
+  if(canSee(a,z,800)){c.lastSeen=now;c.lx=z.x;c.ly=z.y;c.ls=z.bioSurface||null;}else if(now-c.lastSeen>1.2)return chaseEnd(a,s,'lost');
+  if(z.hp>z.maxHp*.5)return chaseEnd(a,s,'healed');
+  if(dist2(a.x,a.y,z.x,z.y)<85**2&&canSee(a,z,200))return chaseEnd(a,s,'close');
+  let other=false;G.agrid.query(a.x,a.y,240,o=>{if(o!==z&&o.alive&&o.zombie&&dist2(a.x,a.y,o.x,o.y)<230**2&&canSee(a,o,240))other=true;});if(other)return chaseEnd(a,s,'threat');
+  if(a.ai.bioPathFailure&&a.ai.bioPathFailure.until>now)return chaseEnd(a,s,'lost');
+  // 目标点跟着僵尸挪动时重新验证可达（地面点要能真的寻到路），不可达就收手回据点
+  if(!c.goal||dist2(c.goal.x,c.goal.y,c.lx,c.ly)>40**2){const g=chaseGoalPoint(a,{x:c.lx,y:c.ly,bioSurface:c.ls});if(!BioHumanAI.route(a,g))return chaseEnd(a,s,'lost');c.goal=g;}
+ }
+ // ---- 生化人类：目标外层包装（追击 / 撤退个人延迟 / 站位惯性）----
+ function goalWrap(native){
+  return function(a){
+   if(!H.on||!npc(a)||!bio()||!BioHold277.active(a))return native.call(this,a);
+   const s=st(a),now=G.time;
+   if(G.modeState.phase==='fight'){
+    if(s.chase){chaseStep(a,s);if(s.chase)return s.chase.goal;}
+    else chaseTry(a,s);
+    if(s.chase)return s.chase.goal;
+    if(s.ret&&now-s.ret.at<15){if(a.bioSurface===s.ret.surf&&!a.bioAir){H.stats.chase.returned++;s.ret=null;}}else if(s.ret){H.stats.chase.noReturn++;s.ret=null;}
+   }
+   const g=native.call(this,a);if(!g)return g;
+   const key=g.key||(g.kind?g.kind:'st:'+(g.surfaceId||'')+':'+Math.round(g.x)+':'+Math.round(g.y));
+   // 撤退/转移：每个人看到同一险情后各自隔一小段个人延迟才动身，不再同一帧全员跳下
+   if(g.kind==='retreat'&&s.lastKey!==key&&s.last&&G.modeState.phase==='fight'){
+    if(!s.pend||s.pend.key!==key){const th=BioHumanAI.threat(a);s.pend={key,at:now+delay(a,'retreat')*(Number.isFinite(th.d)&&th.d<95?.3:1)};H.stats.retreatDelayed++;}
+    if(now<s.pend.at)return s.last;
+   }
+   s.pend=null;
+   // 台面上换站位的惯性：0.6 s 内不来回改，除非身边有威胁
+   if(!g.kind&&s.last&&!s.last.kind&&s.lastKey!==key&&now-s.stationAt<.6&&(g.surfaceId||null)===(s.last.surfaceId||null)&&a.bioSurface===(g.surfaceId||null)&&dist2(g.x,g.y,s.last.x,s.last.y)<200**2){const th=BioHumanAI.threat(a);if(!(th.d<240)){H.stats.stationHeld++;return s.last;}}
+   if(s.lastKey!==key){s.stationAt=now;s.lastKey=key;}s.last=g;return g;
+  };
+ }
+ // 30_bio_topology2712 调用：性格对撤离时机 / 站位的影响
+ H.urgentK=a=>H.on&&npc(a)?persOf(a).urgK:1;
+ H.stationBias=function(a,p,eDist,ideal){
+  if(!H.on||!npc(a))return 0;const P=persOf(a);let v=0;
+  if(P.ideal)v-=(Math.abs(eDist-(ideal+P.ideal))-Math.abs(eDist-ideal))*.33;
+  if(P.peer||P.lone){let n=0;for(const o of G.actors)if(o!==a&&o.alive&&!o.zombie&&o.bioSurface===p.surfaceId&&dist2(o.x,o.y,p.x,p.y)<95**2)n++;v+=n*(P.peer-P.lone);}
+  return v;
+ };
+ // 偏好据点：开局后按性格两两互换已分好的普通据点（每个据点人数不变；新据点机关分配不动）
+ function swapForts(){
+  const forts=world.arena?.forts;if(!forts||forts.length<2)return;
+  const hs=G.actors.filter(a=>npc(a)&&a.alive&&!a.zombie&&forts[a.fortIndex||0]&&!SPECIAL.has(forts[a.fortIndex||0].surfaceId));
+  const count=fi=>hs.filter(a=>(a.fortIndex||0)===fi).length;
+  for(const a of hs){const P=persOf(a);if(!P.lone&&!P.peer)continue;if(rng(a,'swap-roll')>.6)continue;
+   const mine=a.fortIndex||0,cands=[...new Set(hs.map(o=>o.fortIndex||0))].filter(fi=>fi!==mine);if(!cands.length)continue;
+   const want=cands.reduce((b,fi)=>b==null||(P.lone?count(fi)<count(b):count(fi)>count(b))?fi:b,null);
+   if(P.lone?count(want)>=count(mine):count(want)<=count(mine))continue;
+   const partner=hs.find(o=>o!==a&&(o.fortIndex||0)===want&&!persOf(o).lone&&!persOf(o).peer);if(!partner)continue;
+   const fa=a.fortIndex,sa=a.holdSlot;a.fortIndex=partner.fortIndex;a.holdSlot=partner.holdSlot;partner.fortIndex=fa;partner.holdSlot=sa;
+   for(const o of [a,partner]){o.ai.path=null;o.ai.goal=null;if(!o.bioAir)o.ai.bioEdge=null;if(o.ai.bioDefense2712)o.ai.bioDefense2712.anchor=null;}H.stats.swaps++;}
+ }
+
+ // ---- 5. 移动不走直线（生化地面行进）----
+ function moveWrap(native){
+  return function(a,t){
+   const mv=native.call(this,a,t);
+   if(!H.on||!npc(a)||!bio()||a.zombie||a.bioAir||a.bioSurface||!t)return mv;
+   return humanMove(a,t,mv);
+  };
+ }
+ function committed(a){const ai=a.ai,now=G.time;return !!(ai.bioEdge||ai.bioRunup||ai.bioGroundExit||ai.bioLaneRetreat||ai.bioLaneWait||ai.bioUnstuckUntil>now||ai.unstuck>now||ai.escapeUntil>now||ai.bioYieldUntil>now||(ai.bioPathFailure&&ai.bioPathFailure.until>now)||a.climb393);}
+ function threatNear(a,r){const th=a.ai.bioHuman?.threats||[];return th.some(q=>G.time-q.at<2&&dist2(a.x,a.y,q.x,q.y)<r*r);}
+ function clearAhead(a,ux,uy,L){const p={x:a.x+ux*L,y:a.y+uy*L};return BioPlatforms.groundClear({x:a.x,y:a.y,r:(a.r||17)+3,bioZ:0},p)&&!BioPlatforms.surfaceAt(p.x,p.y,40,a.r||17);}
+ function humanMove(a,t,mv){
+  const s=st(a),P=persOf(a),now=G.time,ph=G.modeState.phase,len=Math.hypot(mv[0],mv[1]);
+  if(committed(a)){s.wp=null;s.pause=null;return mv;}
+  const prepOK=ph==='prep'&&(G.modeState.remaining??0)>8,quiet=!threatNear(a,650)&&now-(a.lastHitT??-99)>2;
+  // 停顿观察
+  if(s.pause){if(now<s.pause.until&&quiet)return [0,0];s.pause=null;}
+  if(len<1)return mv;
+  const ux=mv[0]/len,uy=mv[1]/len;
+  if(now>=s.nextMove){s.nextMove=now+.5;
+   if((prepOK||ph==='fight'&&quiet)&&s.pauses<2&&rng(a,'pause-roll')<P.pause*.5){s.pause={until:now+rr(a,'pause-len',.35,.9),face:Math.atan2(uy,ux)+rr(a,'pause-face',-1.3,1.3)};s.pauses++;H.stats.pauses++;return [0,0];}
+   if((prepOK||quiet)&&rng(a,'hop-roll')<P.hop*.5&&Math.hypot(a.vx||0,a.vy||0)>120&&clearAhead(a,ux,uy,90)&&BioPlatforms.jump(a)){H.stats.hops++;}
+   // 随机途经点：离目标远时插一个侧向点（必须从当前位置直线可达，所以一定还在同一连通区域）
+   const gd=dist(a.x,a.y,t.x,t.y);
+   if(!s.wp&&s.wpLegs<2&&gd>420&&len>60&&(prepOK||ph==='fight'&&quiet)&&rng(a,'wp-roll')<.35){
+    const side=rng(a,'wp-side')<.5?-1:1,fwd=rr(a,'wp-fwd',.3,.55)*Math.min(gd,700),lat=side*rr(a,'wp-lat',70,150),p={x:a.x+ux*fwd-uy*lat,y:a.y+uy*fwd+ux*lat};
+    if(BioPlatforms.groundClear({x:a.x,y:a.y,r:(a.r||17)+4,bioZ:0},p)&&!BioPlatforms.surfaceAt(p.x,p.y,40,a.r||17)&&BioPlatforms.groundNodes(a,p.x,p.y).length&&dist(p.x,p.y,t.x,t.y)<gd){s.wp={x:p.x,y:p.y,until:now+dist(a.x,a.y,p.x,p.y)/120+1.2};s.wpLegs++;H.stats.waypoints++;}
+   }
+  }
+  if(s.wp){const d=dist(a.x,a.y,s.wp.x,s.wp.y);
+   if(d<26){s.wp=null;H.stats.waypointDone++;}
+   else if(now>s.wp.until||!quiet&&ph==='fight'||!BioPlatforms.groundClear({x:a.x,y:a.y,r:a.r||17,bioZ:0},s.wp)){s.wp=null;H.stats.waypointDrop++;}
+   else return [(s.wp.x-a.x)/d,(s.wp.y-a.y)/d];
+  }
+  // 弧线 / 不规则左右摆动（不改前进方向的主分量，cos≥0.9）
+  if(len>70){const v=Math.hypot(a.vx||0,a.vy||0);s.wph=(s.wph||rng(a,'weave-ph')*TAU)+v/60*TAU/P.weaveLen;
+   const amp=P.weave*(threatNear(a,300)?.5:1),th=amp*(Math.sin(s.wph)+.35*Math.sin(s.wph*2.3+1.1))*P.weaveSide;
+   for(const k of [1,.5]){const an=th*k,c=Math.cos(an),sn=Math.sin(an),vx=ux*c-uy*sn,vy=uy*c+ux*sn;if(clearAhead(a,vx,vy,52)){if(k)H.stats.weaveFrames++;return [vx*len,vy*len];}}
+  }
+  return mv;
+ }
+ // 站桩小步走位节奏：每人各自的停顿分布（偶尔连续两步、偶尔久站）
+ function motionWrap(){
+  const M=BioHumanMotion,orig=M.apply,base=M.tuning;
+  M.apply=function(a,dt,before){if(!H.on||!npc(a))return orig.call(this,a,dt,before);const P=persOf(a);
+   const short=rng(a,'motion-short')<.22,r=short?[.5,1.4]:P.rest;
+   this.tuning={...base,restMin:r[0],restMax:r[1],stepMin:11,stepMax:rr(a,'motion-step',16,26)};
+   try{return orig.call(this,a,dt,before);}finally{this.tuning=base;}};
+ }
+ // 没目标时偶尔朝听到的枪声大致方向看一眼（只给大概方向）
+ function glance(a,dt){
+  const s=st(a),now=G.time,ai=a.ai;if(ai.target&&now-ai.seenT<1.5)return;
+  if(s.glance){if(now<s.glance.until&&Math.hypot(a.ctrl.mx,a.ctrl.my)<.5){a.ctrl.aim=a.ang+clamp(angDiff(a.ang,s.glance.face),-5*dt,5*dt);}else if(now>=s.glance.until)s.glance=null;return;}
+  if(now<(s.glanceNext||0))return;s.glanceNext=now+.6;
+  let snd=null;for(const q of G.sounds){if(!q.src||q.src===a||q.drop||now-q.t>.6||now<q.t)continue;const d2=dist2(a.x,a.y,q.x,q.y);if(d2>900**2||d2<120**2)continue;if(canSee(a,q.src,600))continue;snd=q;break;}
+  if(!snd||rng(a,'glance-roll')>.35)return;const p=approx(a,snd.x,snd.y,snd.t);s.glance={face:Math.atan2(p.y-a.y,p.x-a.x),until:now+rr(a,'glance-len',.5,1.1)};H.stats.glances++;
+ }
+
+ // ---- 8. 僵尸性格 ----
+ function zCommitted(a){const ai=a.ai,e=ai.bioEdge;return !!(a.bioAir||a.clawAt!=null||a.ctrl.fire||ai.bioRunup||ai.bioGroundExit||ai.bioLaneRetreat||ai.bioLaneWait||a.climb393||ai.z392?.phase||ai.p392?.phase||ai.bioUnstuckUntil>G.time||ai.bioYieldUntil>G.time||(e&&dist2(a.x,a.y,e.a.x,e.a.y)<90**2)||a.bioSurface);}
+ function gateOf(t){const ar=world.arena;if(!ar?.forts||!t.bioSurface)return null;const fi=ar.forts.findIndex(f=>f.surfaceId===t.bioSurface);if(fi<0)return null;let best=null;for(const g of Entry387.gates())if(g.fi===fi&&(!best||dist2(t.x,t.y,g.a.x,g.a.y)<dist2(t.x,t.y,best.a.x,best.a.y)))best=g;return best?{...best,fi,f:ar.forts[fi]}:null;}
+ function zombieStep(a,dt){
+  if(!H.on||!npc(a)||!bio()||G.modeState.phase!=='fight'||!a.alive||!a.zombie)return;
+  const Z=zstyleOf(a),ai=a.ai,c=a.ctrl,now=G.time,t=ai.target;
+  if(Z.key==='rush'){const s=ai.bioTacticsZ;if(s?.phase==='observe'&&s.cycle&&s.cycle.arrivedAt!=null&&now-s.cycle.arrivedAt>.3&&s.cycle.observeUntil>now+.05){s.cycle.observeUntil=now;H.stats.z.rushSkip++;}
+   return;}
+  if(zCommitted(a)){if(Z.phase==='wait'||Z.phase==='feint-out')Z.phase=null;return;}
+  const len=Math.hypot(c.mx,c.my);if(len<.05)return;
+  if(Z.phase&&now>=Z.until){if(Z.phase==='feint-in'){Z.phase='feint-out';Z.until=now+rr(a,'feint-out',.35,.6);}else if(Z.phase==='wait'){H.stats.z.waitTimeout++;Z.phase=null;Z.rushUntil=now+3;}else Z.phase=null;}
+  if(!t||!t.alive||t.zombie){if(Z.phase==='wait')Z.phase=null;}
+  const d=t?dist(a.x,a.y,t.x,t.y):Infinity;
+  if(Z.key==='flank'&&t&&d>280&&!Z.phase){
+   const ux=c.mx/len,uy=c.my/len,amp=Z.flankAmp*clamp((d-280)/260,0,1)*Z.side;
+   for(const k of [1,.5]){const an=amp*k,cs=Math.cos(an),sn=Math.sin(an),vx=ux*cs-uy*sn,vy=uy*cs+ux*sn,p={x:a.x+vx*56,y:a.y+vy*56};
+    if(BioPlatforms.groundClear({x:a.x,y:a.y,r:(a.r||17)+2,bioZ:0},p)){c.mx=vx*len;c.my=vy*len;H.stats.z.flankFrames++;break;}}
+   return;
+  }
+  if(!t||!t.bioSurface)return;const g=gateOf(t);if(!g)return;const gd=dist(a.x,a.y,g.a.x,g.a.y);
+  if(Z.key==='feint'){
+   if(!Z.phase&&now>=Z.nextFeint&&gd>110&&gd<260&&Z.feints<2&&canSee(t,a,700)){Z.nextFeint=now+rr(a,'feint-gap',4,8);if(rng(a,'feint-roll')<.6){Z.phase='feint-in';Z.until=now+rr(a,'feint-in',.25,.4);Z.feints++;H.stats.z.feint++;}}
+   if(Z.phase==='feint-in'){const ux=(g.a.x-a.x)/(gd||1),uy=(g.a.y-a.y)/(gd||1);c.mx=ux;c.my=uy;
+    if(now>Z.until-.12&&!Z.hopped&&!BioPlatforms.surfaceAt(a.x+ux*70,a.y+uy*70,40,a.r||17)&&BioPlatforms.groundClear({x:a.x,y:a.y,r:a.r||17,bioZ:0},{x:a.x+ux*70,y:a.y+uy*70})){if(BioPlatforms.jump(a)){Z.hopped=1;H.stats.z.feintHop++;}}}
+   else if(Z.phase==='feint-out'){Z.hopped=0;const ux=(a.x-g.a.x)/(gd||1),uy=(a.y-g.a.y)/(gd||1),p={x:a.x+ux*40,y:a.y+uy*40};if(BioPlatforms.groundClear({x:a.x,y:a.y,r:a.r||17,bioZ:0},p)){c.mx=ux*.9-uy*.3;c.my=uy*.9+ux*.3;}else Z.phase=null;}
+   return;
+  }
+  if(Z.key==='wait'){
+   if(now<Z.rushUntil){if(Z.phase==='wait')Z.phase=null;return;}
+   const firing=G.sounds.some(q=>q.src&&!q.src.zombie&&q.src.bioSurface===t.bioSurface&&now-q.t<.5);
+   if(!Z.phase&&now>=Z.nextWait&&gd>140&&gd<300&&firing){Z.nextWait=now+10;Z.phase='wait';Z.until=now+rr(a,'wait-len',2.5,5);Z.since=now;Z.hp=a.hp;H.stats.z.wait++;}
+   if(Z.phase==='wait'){
+    // 看见台上有人换弹（可见动作）→ 立刻冲；被打得厉害也冲（别站着挨打）
+    let reload=false;for(const o of G.actors)if(o.alive&&!o.zombie&&o.bioSurface===t.bioSurface&&o.action?.type==='reload'&&canSee(a,o,700)){reload=true;break;}
+    if(reload){H.stats.z.waitReload++;Z.phase=null;Z.rushUntil=now+3;return;}
+    if(a.hp<Z.hp-a.maxHp*.12){H.stats.z.waitHit++;Z.phase=null;Z.rushUntil=now+3;return;}
+    if(gd<140){Z.phase=null;return;}
+    const sp=Math.sin((now-Z.since)*2.4+(a.modeIndex||0))>0?1:-1,ux=(g.a.x-a.x)/(gd||1),uy=(g.a.y-a.y)/(gd||1),vx=-uy*sp,vy=ux*sp,p={x:a.x+vx*40,y:a.y+vy*40};
+    const back=gd<200?-.35:0;if(BioPlatforms.groundClear({x:a.x,y:a.y,r:a.r||17,bioZ:0},p)){c.mx=(vx+ux*back)*.45;c.my=(vy+uy*back)*.45;}else{c.mx=ux*back*.45;c.my=uy*back*.45;}
+   }
+  }
+ }
+
+ // ---- 安装 ----
+ function install(){
+  const qs=(()=>{try{return new URLSearchParams(location.search).get('aiseed');}catch(e){return null;}})();if(qs!=null&&qs!==''&&Number.isFinite(+qs))H.forceSeed=(+qs)>>>0;
+  const think=aiThink;aiThink=function(a){const prev={heard:a.ai?.heard};const out=think(a);if(H.on&&npc(a)&&!a.zombie)afterThink(a,prev);return out;};
+  const act=aiAct;aiAct=function(a,dt){const out=act(a,dt);if(H.on&&npc(a)&&!a.zombie){const s=st(a);s.wasFire=!!a.ctrl.fire;if(bio()&&G.modeState?.phase!=='intermission'){if(s.pause&&G.time<s.pause.until&&!a.ctrl.fire&&Math.hypot(a.ctrl.mx,a.ctrl.my)<.05)a.ctrl.aim=a.ang+clamp(angDiff(a.ang,s.pause.face),-4*dt,4*dt);else glance(a,dt);}}return out;};
+  const zu=updateZombieAI;updateZombieAI=function(a,dt){const out=zu(a,dt);try{zombieStep(a,dt);}catch(e){H.err=String(e);}return out;};
+  BioHumanAI.goalFor=goalWrap(BioHumanAI.goalFor);
+  BioPlatforms.navigate=moveWrap(BioPlatforms.navigate);
+  motionWrap();
+  // 手雷：只按自己看到/记得的入口僵尸数决定（原来直接数全图僵尸）
+  Entry387.crowd=function(a,need=2){const ar=world.arena,f=ar.forts?.[a.fortIndex||0];if(!f||a.bioSurface!==f.surfaceId)return null;
+   const known=H.on&&npc(a)?(a.ai?.bioHuman?.threats||[]).filter(t=>G.time-t.at<1.2):null;
+   for(const g of this.gates()){if(ar.forts[g.fi]!==f)continue;const d=dist(a.x,a.y,g.a.x,g.a.y);if(d<160||d>520)continue;let n=0;
+    if(known)for(const t of known){if(dist2(t.x,t.y,g.a.x,g.a.y)<120*120)n++;}else for(const t of G.actors)if(t.alive&&t.zombie&&dist2(t.x,t.y,g.a.x,g.a.y)<120*120)n++;
+    if(n>=need)return g.a;}return null;};
+  // 僵尸生命编号：被感染一次算一条命（每回合 / 每次感染重新抽僵尸性格）
+  const inf=infectActor;infectActor=function(a,mother=false,src=null){const r=inf.apply(this,arguments);if(r!==false&&a.zombie){a.zombieSince399=(a.zombieSince399||0)+1;if(a.ai?.h399?.chase)chaseEnd(a,a.ai.h399,'infected');}return r;};
+  const au=aiUpdate;aiUpdate=function(a,dt){if(H.lastTick!==G.time){H.lastTick=G.time;H.tick();}return au(a,dt);};
+ }
+ H.tick=function(){if(!H.on||!bio()||!G.modeState)return;const m=G.modeState;if(m.phase==='prep'&&m.round!==H.swapRound&&(m.remaining??20)<19.5){H.swapRound=m.round;try{swapForts();}catch(e){H.err=String(e);}}if(m.phase!=='prep'&&m.round!==H.swapRound)H.swapRound=m.round;};
+ H.rng=rng;H.persOf=persOf;H.zstyleOf=zstyleOf;H.install=install;H.SPECIAL=SPECIAL;
+ return H;
+})();
+Human399.install();window.Human399=Human399;
 // 2.8.1 菜单预生成：固定地图生成很快，启动和切换模式后立即生成，避免大地图预览/缩略图停在旧内容
 {const kick281=()=>{if(G.state!=='menu'||UI.generating)return;if(Settings.mode==='br'){if(world&&world.config?.mode!=='br')UI.newIsland().catch(()=>{});return;}const cfg=mapConfig(Settings);if(world&&world.config?.mode===cfg.mode&&world.arena?.id===cfg.mapId)return;UI.newIsland().catch(()=>{});};
  setTimeout(kick281,150);document.querySelectorAll('#modePicker [data-mode]').forEach(b=>b.addEventListener('click',()=>setTimeout(kick281,60)));}
