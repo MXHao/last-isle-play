@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0c1b24">
-<title>终局之岛 · 玩法重制版 3.9.9 · 战地规则</title>
+<title>终局之岛 · 玩法重制版 3.9.10 · 战地规则</title>
 <style>
 :root{
   --ink:#0c1b24;--ink2:#132a36;--ink3:#1d3b4a;--paper:#eef2ec;--muted:#8fa5a6;--signal:#ffc93c;--storm:#957bff;--danger:#ff5446;--ok:#6fdc8c;
@@ -650,7 +650,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="menu">
   <canvas id="menuMap"></canvas>
   <div class="mpanel">
-    <h1 class="title"><small>LAST ISLE · 3.9.9</small>终局之岛</h1>
+    <h1 class="title"><small>LAST ISLE · 3.9.10</small>终局之岛</h1>
     <p class="tagline" id="tagline">五十人空降一座孤岛。毒圈收紧，物资有限，只有一个人能离开。</p>
     <div class="islandinfo" id="islandinfo">正在生成岛屿…</div>
     <div id="modePicker" class="mode-picker"><button data-mode="br">大逃杀</button><button data-mode="battlefield">战场行动</button><button data-mode="tdm">团队竞技</button><button data-mode="infection">生化模式</button></div>
@@ -671,7 +671,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
       <button id="btnHelp">操作说明</button>
       <button id="btnCareer">生涯战绩</button>
     </div>
-    <p class="mfoot">玩法重制版 3.9.9 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
+    <p class="mfoot">玩法重制版 3.9.10 · 战地规则 · 完全离线 · 收藏、键位和布局保存在本机浏览器。</p>
   </div>
 </div>
 
@@ -817,7 +817,7 @@ body.touch #announce{top:calc(var(--sa-t) + 92px)}
 <div id="fps" class="hidden"></div>
 
 <div id="loadoutPanel" class="modal hidden"><div class="sheet">
-<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.9.9</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
+<header class="armory-head"><div><span class="armory-kicker">FIELD ARMORY / 3.9.10</span><h2>个人仓库</h2><p>全枪械预览 · 三套保存背包 · 实际游戏参数</p></div><button data-close type="button" aria-label="关闭个人仓库">完成</button></header>
 <div class="armory-layout">
 <aside class="armory-loadout" aria-label="保存的背包">
 <h3 class="armory-section-title">我的配装 <small>保存在此设备</small></h3>
@@ -11929,6 +11929,7 @@ const BioZombieTactics = {
     reactionFactor:.2, reactionMin:.12, reactionMax:.30,
     maxApproachETA:3.6, observedTargetMaxAge:2.4
   },
+  rush3910:true,
   get epochSeconds(){return this.tuning.attackActiveSeconds;},
   get cycleLimit(){return WaterplantCrowd274.active()?3:this.tuning.cycleLimit;},
   get observeLimit(){return WaterplantCrowd274.active()?.55:this.tuning.observeLimit;},
@@ -12116,7 +12117,8 @@ const BioZombieTactics = {
     const e=s.epoch;
     if(e&&e.active>=this.epochSeconds){
       const failed=e.expected>1&&e.progressRatio<this.tuning.failedProgressRatio,damageFraction=e.damage/Math.max(1,a.maxHp),lowHealth=a.hp/a.maxHp<this.tuning.lowHealthFraction,hasNew=damageFraction>=(lowHealth?this.tuning.lowHealthDamageFraction:this.tuning.freshDamageFraction)||(e.hits>=this.tuning.pressureHitCount&&e.pressureRatio>=this.tuning.driveLossRatio),hitAfterCycle=s.cycleSerial===0||s.lastHitAt>s.lastCycleHit;
-      if(failed&&hasNew&&pressure.live&&hitAfterCycle&&now>=s.nextAttempt){
+      // 3.9.10：生化僵尸不再「受阻后退—观察」（所有档位直接硬冲；残血找掩体由 Cover3910 单独负责）
+      if(!(G.mode==='infection'&&this.rush3910)&&failed&&hasNew&&pressure.live&&hitAfterCycle&&now>=s.nextAttempt){
         s.stats.failedAdvance++;s.stats.retreatAttempts++;s.lastCycleHit=s.lastHitAt;
         const goal=this.chooseRetreat(a,s,p,pressure),id=++s.cycleSerial;
         s.cycle={id,at:now,deadline:now+this.cycleLimit,goal};this.emit(a,'retreat_attempt',{goal,damage:e.damage,newHits:e.hits,activeSeconds:e.active,progress:e.progress,expectedProgress:e.expected,progressRatio:e.progressRatio,damageFraction,driveLoss:e.pressureRatio,deadline:s.cycle.deadline});
@@ -12491,28 +12493,9 @@ const BioHumanDefense = {
 const __bio221LegacyZombieUpdate=updateZombieAI;
 updateZombieAI=function(a,dt){const r=BioTactics.enabled('zombie',a)?BioZombieTactics.update(a,dt):__bio221LegacyZombieUpdate(a,dt);if(G.mode==='infection')Zombie388.after(a,dt);return r;};
 // 3.8.12 per-level zombie tactics layered on top of BioZombieTactics (only overrides movement intent).
-const Zombie388={stats:{heals:0,healHp:0,regroups:0,rushes:0},
- heal:[null,null,[.20,.60],[.30,.75],[.35,.85],[.40,.90]],
- humans(){return G.actors.filter(t=>t.alive&&!t.zombie&&t.mode==='ground');},
- after(a,dt){const ai=a.ai,c=a.ctrl;if(!ai||a.isPlayer||!a.alive||G.modeState.phase!=='fight')return;const lv=zLv388(),H=this.humans();if(!H.length)return;
-  let near=null,nd=1e9;for(const t of H){const d=dist(a.x,a.y,t.x,t.y);if(d<nd){nd=d;near=t;}}
-  const frac=a.hp/Math.max(1,a.maxHp),T=this.heal[lv];
-  // 1. heal retreat: back off out of fire, then stand still for regen
-  if(T){if(!ai.heal388&&frac<T[0]&&G.time-(a.lastHitT??-99)<2&&!a.bioAir){ai.heal388={at:G.time,spot:null};this.stats.heals++;}
-   if(ai.heal388){const h=ai.heal388;if(frac>=T[1]||nd<110||G.time-h.at>25){ai.heal388=null;}
-    else{if(!h.spot&&(G.time-(a.lastHitT??-99)<1.2||nd<380)){const ang=Math.atan2(a.y-near.y,a.x-near.x);h.spot={x:clamp(a.x+Math.cos(ang)*260,40,WS-40),y:clamp(a.y+Math.sin(ang)*260,40,WS-40),bioUseLinks:true,floor:0,surfaceId:null};h.spotAt=G.time;}
-     if(h.spot&&dist2(a.x,a.y,h.spot.x,h.spot.y)>40*40&&G.time-h.spotAt<5&&G.time-(a.lastHitT??-99)<2.5){const mv=BioPlatforms.active()?BioPlatforms.navigate(a,h.spot):aiGoto(a,h.spot.x,h.spot.y),l=Math.hypot(mv[0],mv[1])||1;c.mx=mv[0]/l;c.my=mv[1]/l;}
-     else{h.spot=null;c.mx=c.my=0;}
-     c.fire=false;return;}}}
-  // 2. regroup outside a fort entrance (hard+); 3. rush while a defender reloads (elite+)
-  if(lv>=3&&!a.bioAir&&!a.bioSurface){for(const g of Entry387.gates()){const d=dist(a.x,a.y,g.a.x,g.a.y);if(d>260||d<90)continue;
-    const f=world.arena.forts[g.fi],def=H.filter(t=>t.bioSurface===f.surfaceId);if(!def.length)break;
-    if(lv>=4&&def.some(t=>t.action&&t.action.type==='reload')){if(!ai.rush388||G.time-ai.rush388>2){ai.rush388=G.time;this.stats.rushes++;}ai.wait388=null;break;}
-    let n=0;for(const z of G.actors)if(z.alive&&z.zombie&&dist2(z.x,z.y,g.a.x,g.a.y)<300*300)n++;
-    if(n>=Math.min(3,def.length+1)){ai.wait388=null;break;}
-    if(!ai.wait388){ai.wait388=G.time;this.stats.regroups++;}
-    if(G.time-ai.wait388<(lv>=5?5:3.5)){c.mx=c.my=0;c.fire=false;}break;}}
- }};
+// 3.9.10：原 3.8.8 的分档回血撤退（直线后退 260 px）、入口外集结（老兵+）、换弹冲锋（精英+）全部移除——
+// 僵尸所有档位直接硬冲；残血找掩体回血改由 61_zombie3910.js 的 Cover3910 负责。Zombie388 只保留统计对象（Regen388 写 healHp）。
+const Zombie388={stats:{heals:0,healHp:0,regroups:0,rushes:0},after(a,dt){}};
 // CF 救世主模式 regen: still 3 s, not hit, not attacking -> +200 HP/s up to max. All zombies (player too).
 const Regen388={delay:3,rate:200,
  tick(dt){if(G.mode!=='infection'||!G.modeState||G.modeState.phase!=='fight')return;for(const a of G.actors){if(!a.alive||!a.zombie)continue;
@@ -21897,16 +21880,19 @@ boot();
 // 所有随机都来自本模块自己的对局种子流（Human399.seed，每场开局定一次；?aiseed=数字 或 Human399.forceSeed 可固定），
 // 按「种子 × 角色编号 × 用途」分流，不消耗 Math.random，也不改武器数值、音效、据点几何、母体出生与单入口规则。
 // 人类：性格档案（生化）、像人的瞄准（全部模式）、个人反应延迟与决策惯性、不走直线（生化地面）、信息不完美。
-// 僵尸：硬冲（少观望）/ 绕路 / 骗跳 / 入口外等换弹（生化）。回血撤退（Zombie388）保持原样——提前打断它会让僵尸反复重选回血点，寻路失败变多。
+// 僵尸：3.9.10 起不再抽打法（绕路/骗跳/等换弹已删除），全部档位直接硬冲；唯一例外是残血找掩体回血（61_zombie3910.js Cover3910）。
 const Human399 = (()=>{
  const TIER=['casual','easy','normal','hard','elite','nightmare'];
  // 新据点（单入口特殊机关：吊桥/信号灯架/检修梯/升降台）不参与追击补刀与据点互换——上去难、下去很可能回不来。
  const SPECIAL=new Set(['st_a_deck','st_a_bridge','st_a_barb','fc_f_gantry','ww_a_deck','ww_a_lane','obs_dome_top','obs_lift']);
- const H={version:'3.9.9',on:true,seed:0,forceSeed:null,
+ const H={version:'3.9.10',on:true,seed:0,forceSeed:null,
   stats:null,
   // ---- 档位参数（index = 档位 0 观光 … 5 极限）----
   // 瞄准：tau 跟枪滞后（s）、w/z 甩枪弹簧（角频率/阻尼比，阻尼 <1 即会过冲）、notice 发现目标后开始转身前的个人延迟、sw 换目标延迟、res 残余误差倍率（校准用）、drift 连射漂移
-  aimT:{tau:[.085,.08,.07,.055,.045,.04],w:[11,12.5,14,16,18,19],z:[.42,.46,.5,.55,.62,.66],notice:[.30,.25,.20,.15,.11,.09],sw:[.28,.23,.18,.14,.11,.09],res:[.72,.66,.70,.85,.90,.90],drift:[.30,.30,.32,.28,.26,.24]},
+  // 3.9.10：精英/极限反应延迟更短、甩枪几乎不过冲（阻尼接近 1），精英残余误差回调到 3.9.8 的固定靶命中
+  aimT:{tau:[.085,.08,.07,.055,.04,.03],w:[11,12.5,14,16,19,22],z:[.42,.46,.5,.55,.78,.88],notice:[.30,.25,.20,.15,.09,.06],sw:[.28,.23,.18,.14,.09,.06],res:[.72,.66,.70,.85,.78,.70],drift:[.30,.30,.32,.28,.22,.18]},
+  // 个人延迟随机幅度（lo,hi 倍率）：高档更稳定，不会偶尔慢半拍
+  delayJ:[[.35,1.75],[.35,1.75],[.35,1.75],[.4,1.6],[.6,1.25],[.7,1.15]],
   chaseT:[.35,.6,1,1,.8,.8],
   pers:{
    aggressive:{name:'激进',w:.22,chase:1,urgK:.8,ideal:-45,peer:0,lone:0,supply:0,react:.85,mem:2.4,pause:.015,hop:.035,weave:.30,rest:[1.2,4.5]},
@@ -21915,11 +21901,9 @@ const Human399 = (()=>{
    lone:{name:'独狼',w:.16,chase:.45,urgK:.95,ideal:20,peer:0,lone:24,supply:0,react:.95,mem:2.1,pause:.035,hop:.025,weave:.38,rest:[1.5,6]},
    greedy:{name:'贪补给',w:.2,chase:.3,urgK:1,ideal:0,peer:0,lone:0,supply:.45,react:1,mem:1.8,pause:.03,hop:.02,weave:.3,rest:[2,7]}
   },
-  zstyles:{rush:{name:'硬冲',w:.35},flank:{name:'绕路',w:.25},feint:{name:'骗跳',w:.2},wait:{name:'等换弹',w:.2}}
  };
- const resetStats=()=>{H.stats={pers:{},zstyle:{},aim:{notice:0,switch:0},chase:{start:0,kill:0,infected:0,lost:0,threat:0,timeout:0,close:0,healed:0,returned:0,noReturn:0},
-  retreatDelayed:0,stationHeld:0,swaps:0,waypoints:0,waypointDone:0,waypointDrop:0,pauses:0,hops:0,weaveFrames:0,glances:0,
-  z:{feint:0,feintHop:0,wait:0,waitReload:0,waitTimeout:0,waitHit:0,flankFrames:0,rushSkip:0,rushHeal:0}};};
+ const resetStats=()=>{H.stats={pers:{},aim:{notice:0,switch:0},chase:{start:0,kill:0,infected:0,lost:0,threat:0,timeout:0,close:0,healed:0,returned:0,noReturn:0},
+  retreatDelayed:0,stationHeld:0,swaps:0,waypoints:0,waypointDone:0,waypointDrop:0,pauses:0,hops:0,weaveFrames:0,glances:0};};
  resetStats();
  // ---- 种子流 ----
  function mix(h,str){for(let i=0;i<str.length;i++)h=Math.imul(h^str.charCodeAt(i),0x01000193)>>>0;return h>>>0;}
@@ -21944,13 +21928,9 @@ const Human399 = (()=>{
  function persOf(a){ensureSeed();let P=a.h399P;if(!P||P.match!==G.matchId||P.seed!==H.seed){const k=pickW(a,'personality',H.pers);H.stats.pers[k]=(H.stats.pers[k]||0)+1;P=a.h399P={match:G.matchId,seed:H.seed,key:k,...H.pers[k],
    reactBase:rr(a,'react-base',.6,1.45),memJ:rr(a,'mem-j',.8,1.25),weaveLen:rr(a,'weave-len',170,380),weaveSide:rng(a,'weave-side')<.5?-1:1};}
   return P;}
- function zstyleOf(a){const round=G.modeState?.round||0;let Z=a.ai.h399Z;if(!Z||Z.round!==round||Z.life!==a.zombieSince399){
-   const k=pickW(a,'zstyle',H.zstyles);Z=a.ai.h399Z={round,life:a.zombieSince399,key:k,side:rng(a,'zflank-side')<.5?-1:1,flankAmp:rr(a,'zflank-amp',.38,.62),nextFeint:0,nextWait:0,phase:null,until:0,rushUntil:0,feints:0};
-   H.stats.zstyle[k]=(H.stats.zstyle[k]||0)+1;}
-  return Z;}
  function st(a){let s=a.ai.h399;const round=G.modeState?.round||0;if(!s||s.match!==G.matchId||s.round!==round)s=a.ai.h399={match:G.matchId,round,aim:null,chase:null,chaseNext:0,chaseCool:0,ret:null,pend:null,last:null,lastKey:null,stationAt:-9,wp:null,wpLegs:0,pause:null,pauses:0,nextMove:0,glance:null,wasFire:false};return s;}
  // 个人反应延迟：同一事件不同人在不同时刻反应
- function delay(a,kind){const P=persOf(a),L=lv(a),base=(kind==='retreat'?[.30,.26,.22,.18,.15,.13]:H.aimT.notice)[L];return clamp(base*P.reactBase*P.react*rr(a,'delay-'+kind,.35,1.75),.03,.7);}
+ function delay(a,kind){const P=persOf(a),L=lv(a),base=(kind==='retreat'?[.30,.26,.22,.18,.15,.13]:H.aimT.notice)[L];const J=H.delayJ[L],pk=L>=4?1+(P.reactBase*P.react-1)*.35:P.reactBase*P.react;return clamp(base*pk*rr(a,'delay-'+kind,J[0],J[1]),.03,L>=4?.2:.7);}
 
  // ---- 2. 像人的瞄准（07_ai.js fight 分支调用；全部模式 NPC）----
  H.aim=function(a,t,ta,err,d,dt,vis){
@@ -22126,55 +22106,11 @@ const Human399 = (()=>{
   if(!snd||rng(a,'glance-roll')>.35)return;const p=approx(a,snd.x,snd.y,snd.t);s.glance={face:Math.atan2(p.y-a.y,p.x-a.x),until:now+rr(a,'glance-len',.5,1.1)};H.stats.glances++;
  }
 
- // ---- 8. 僵尸性格 ----
- function zCommitted(a){const ai=a.ai,e=ai.bioEdge;return !!(a.bioAir||a.clawAt!=null||a.ctrl.fire||ai.bioRunup||ai.bioGroundExit||ai.bioLaneRetreat||ai.bioLaneWait||a.climb393||ai.z392?.phase||ai.p392?.phase||ai.bioUnstuckUntil>G.time||ai.bioYieldUntil>G.time||(e&&dist2(a.x,a.y,e.a.x,e.a.y)<90**2)||a.bioSurface);}
- function gateOf(t){const ar=world.arena;if(!ar?.forts||!t.bioSurface)return null;const fi=ar.forts.findIndex(f=>f.surfaceId===t.bioSurface);if(fi<0)return null;let best=null;for(const g of Entry387.gates())if(g.fi===fi&&(!best||dist2(t.x,t.y,g.a.x,g.a.y)<dist2(t.x,t.y,best.a.x,best.a.y)))best=g;return best?{...best,fi,f:ar.forts[fi]}:null;}
- function zombieStep(a,dt){
-  if(!H.on||!npc(a)||!bio()||G.modeState.phase!=='fight'||!a.alive||!a.zombie)return;
-  const Z=zstyleOf(a),ai=a.ai,c=a.ctrl,now=G.time,t=ai.target;
-  if(Z.key==='rush'){const s=ai.bioTacticsZ;if(s?.phase==='observe'&&s.cycle&&s.cycle.arrivedAt!=null&&now-s.cycle.arrivedAt>.3&&s.cycle.observeUntil>now+.05){s.cycle.observeUntil=now;H.stats.z.rushSkip++;}
-   return;}
-  if(zCommitted(a)){if(Z.phase==='wait'||Z.phase==='feint-out')Z.phase=null;return;}
-  const len=Math.hypot(c.mx,c.my);if(len<.05)return;
-  if(Z.phase&&now>=Z.until){if(Z.phase==='feint-in'){Z.phase='feint-out';Z.until=now+rr(a,'feint-out',.35,.6);}else if(Z.phase==='wait'){H.stats.z.waitTimeout++;Z.phase=null;Z.rushUntil=now+3;}else Z.phase=null;}
-  if(!t||!t.alive||t.zombie){if(Z.phase==='wait')Z.phase=null;}
-  const d=t?dist(a.x,a.y,t.x,t.y):Infinity;
-  if(Z.key==='flank'&&t&&d>280&&!Z.phase){
-   const ux=c.mx/len,uy=c.my/len,amp=Z.flankAmp*clamp((d-280)/260,0,1)*Z.side;
-   for(const k of [1,.5]){const an=amp*k,cs=Math.cos(an),sn=Math.sin(an),vx=ux*cs-uy*sn,vy=uy*cs+ux*sn,p={x:a.x+vx*56,y:a.y+vy*56};
-    if(BioPlatforms.groundClear({x:a.x,y:a.y,r:(a.r||17)+2,bioZ:0},p)){c.mx=vx*len;c.my=vy*len;H.stats.z.flankFrames++;break;}}
-   return;
-  }
-  if(!t||!t.bioSurface)return;const g=gateOf(t);if(!g)return;const gd=dist(a.x,a.y,g.a.x,g.a.y);
-  if(Z.key==='feint'){
-   if(!Z.phase&&now>=Z.nextFeint&&gd>110&&gd<260&&Z.feints<2&&canSee(t,a,700)){Z.nextFeint=now+rr(a,'feint-gap',4,8);if(rng(a,'feint-roll')<.6){Z.phase='feint-in';Z.until=now+rr(a,'feint-in',.25,.4);Z.feints++;H.stats.z.feint++;}}
-   if(Z.phase==='feint-in'){const ux=(g.a.x-a.x)/(gd||1),uy=(g.a.y-a.y)/(gd||1);c.mx=ux;c.my=uy;
-    if(now>Z.until-.12&&!Z.hopped&&!BioPlatforms.surfaceAt(a.x+ux*70,a.y+uy*70,40,a.r||17)&&BioPlatforms.groundClear({x:a.x,y:a.y,r:a.r||17,bioZ:0},{x:a.x+ux*70,y:a.y+uy*70})){if(BioPlatforms.jump(a)){Z.hopped=1;H.stats.z.feintHop++;}}}
-   else if(Z.phase==='feint-out'){Z.hopped=0;const ux=(a.x-g.a.x)/(gd||1),uy=(a.y-g.a.y)/(gd||1),p={x:a.x+ux*40,y:a.y+uy*40};if(BioPlatforms.groundClear({x:a.x,y:a.y,r:a.r||17,bioZ:0},p)){c.mx=ux*.9-uy*.3;c.my=uy*.9+ux*.3;}else Z.phase=null;}
-   return;
-  }
-  if(Z.key==='wait'){
-   if(now<Z.rushUntil){if(Z.phase==='wait')Z.phase=null;return;}
-   const firing=G.sounds.some(q=>q.src&&!q.src.zombie&&q.src.bioSurface===t.bioSurface&&now-q.t<.5);
-   if(!Z.phase&&now>=Z.nextWait&&gd>140&&gd<300&&firing){Z.nextWait=now+10;Z.phase='wait';Z.until=now+rr(a,'wait-len',2.5,5);Z.since=now;Z.hp=a.hp;H.stats.z.wait++;}
-   if(Z.phase==='wait'){
-    // 看见台上有人换弹（可见动作）→ 立刻冲；被打得厉害也冲（别站着挨打）
-    let reload=false;for(const o of G.actors)if(o.alive&&!o.zombie&&o.bioSurface===t.bioSurface&&o.action?.type==='reload'&&canSee(a,o,700)){reload=true;break;}
-    if(reload){H.stats.z.waitReload++;Z.phase=null;Z.rushUntil=now+3;return;}
-    if(a.hp<Z.hp-a.maxHp*.12){H.stats.z.waitHit++;Z.phase=null;Z.rushUntil=now+3;return;}
-    if(gd<140){Z.phase=null;return;}
-    const sp=Math.sin((now-Z.since)*2.4+(a.modeIndex||0))>0?1:-1,ux=(g.a.x-a.x)/(gd||1),uy=(g.a.y-a.y)/(gd||1),vx=-uy*sp,vy=ux*sp,p={x:a.x+vx*40,y:a.y+vy*40};
-    const back=gd<200?-.35:0;if(BioPlatforms.groundClear({x:a.x,y:a.y,r:a.r||17,bioZ:0},p)){c.mx=(vx+ux*back)*.45;c.my=(vy+uy*back)*.45;}else{c.mx=ux*back*.45;c.my=uy*back*.45;}
-   }
-  }
- }
-
  // ---- 安装 ----
  function install(){
   const qs=(()=>{try{return new URLSearchParams(location.search).get('aiseed');}catch(e){return null;}})();if(qs!=null&&qs!==''&&Number.isFinite(+qs))H.forceSeed=(+qs)>>>0;
   const think=aiThink;aiThink=function(a){const prev={heard:a.ai?.heard};const out=think(a);if(H.on&&npc(a)&&!a.zombie)afterThink(a,prev);return out;};
   const act=aiAct;aiAct=function(a,dt){const out=act(a,dt);if(H.on&&npc(a)&&!a.zombie){const s=st(a);s.wasFire=!!a.ctrl.fire;if(bio()&&G.modeState?.phase!=='intermission'){if(s.pause&&G.time<s.pause.until&&!a.ctrl.fire&&Math.hypot(a.ctrl.mx,a.ctrl.my)<.05)a.ctrl.aim=a.ang+clamp(angDiff(a.ang,s.pause.face),-4*dt,4*dt);else glance(a,dt);}}return out;};
-  const zu=updateZombieAI;updateZombieAI=function(a,dt){const out=zu(a,dt);try{zombieStep(a,dt);}catch(e){H.err=String(e);}return out;};
   BioHumanAI.goalFor=goalWrap(BioHumanAI.goalFor);
   BioPlatforms.navigate=moveWrap(BioPlatforms.navigate);
   motionWrap();
@@ -22184,15 +22120,137 @@ const Human399 = (()=>{
    for(const g of this.gates()){if(ar.forts[g.fi]!==f)continue;const d=dist(a.x,a.y,g.a.x,g.a.y);if(d<160||d>520)continue;let n=0;
     if(known)for(const t of known){if(dist2(t.x,t.y,g.a.x,g.a.y)<120*120)n++;}else for(const t of G.actors)if(t.alive&&t.zombie&&dist2(t.x,t.y,g.a.x,g.a.y)<120*120)n++;
     if(n>=need)return g.a;}return null;};
-  // 僵尸生命编号：被感染一次算一条命（每回合 / 每次感染重新抽僵尸性格）
+  // 僵尸生命编号：被感染一次算一条命（Cover3910 / 测试脚本用）
   const inf=infectActor;infectActor=function(a,mother=false,src=null){const r=inf.apply(this,arguments);if(r!==false&&a.zombie){a.zombieSince399=(a.zombieSince399||0)+1;if(a.ai?.h399?.chase)chaseEnd(a,a.ai.h399,'infected');}return r;};
   const au=aiUpdate;aiUpdate=function(a,dt){if(H.lastTick!==G.time){H.lastTick=G.time;H.tick();}return au(a,dt);};
  }
  H.tick=function(){if(!H.on||!bio()||!G.modeState)return;const m=G.modeState;if(m.phase==='prep'&&m.round!==H.swapRound&&(m.remaining??20)<19.5){H.swapRound=m.round;try{swapForts();}catch(e){H.err=String(e);}}if(m.phase!=='prep'&&m.round!==H.swapRound)H.swapRound=m.round;};
- H.rng=rng;H.persOf=persOf;H.zstyleOf=zstyleOf;H.install=install;H.SPECIAL=SPECIAL;
+ H.rng=rng;H.persOf=persOf;H.install=install;H.SPECIAL=SPECIAL;
  return H;
 })();
 Human399.install();window.Human399=Human399;
+// ---- 61_zombie3910.js ----
+// 3.9.10 生化僵尸：所有档位直接硬冲（3.9.9 的绕路/骗跳/等换弹、3.8.8 的入口外集结/换弹冲锋/直线后退回血、
+// BioZombieTactics 的受阻后退观察都已移除）。唯一例外：残血且正在挨打时找掩体（断开所有人类的视线/射击线、
+// 从当前位置沿地面直线或经一个中转点可达），站住借 Regen388（静止 3 s 后 +200 HP/s）回血，回到较高血量或被人追近
+// 再重新进攻。掩体期间完全接管该僵尸的移动（不调原寻路），进出都清掉原路线状态，避免两套逻辑互相打断导致寻路失败暴增。
+// 只在生化模式战斗阶段生效；不改武器数值、音效、据点几何、母体出生、单入口规则。
+const Cover3910 = (()=>{
+ const C={on:true,
+  // 档位 0 观光 … 5 极限
+  T:{low:[.25,.28,.30,.36,.42,.45],      // 触发：血量 ≤ 该比例且 1 s 内挨过打（高档集火下掉血快，提前一点躲）
+     resume:[.75,.8,.88,.95,.95,.95],    // 回到该比例再冲（高档基本回满）
+     react:[.9,.7,.5,.3,.2,.15],         // 决策延迟 s（期间照常冲）
+     dumb:[.45,.3,.15,.05,0,0],          // 每次残血有此概率「犯傻」不找掩体
+     close:[90,100,110,130,140,150],     // 地面上有人类追到这个距离内 → 直接扑上去
+     maxR:[240,280,320,380,420,440]},    // 找掩体搜索半径
+  stats:null,
+ };
+ const reset=()=>{C.stats={trig:0,dumb:0,start:0,noSpot:0,arrive:0,healed:0,close:0,timeout:0,exposed:0,repick:0,stuck:0,giveUp:0,inPlace:0,twoLeg:0,frames:0}};reset();
+ const bio=()=>G.mode==='infection';
+ const lv=()=>typeof zLv388==='function'?zLv388():2;
+ // 测试/回放用的确定性随机（不消耗 Math.random）
+ const rnd=(a,ch)=>window.Human399?Human399.rng(a,'c3910-'+ch):Math.random();
+ function humans(){const out=[];for(const t of G.actors)if(t.alive&&!t.zombie&&t.mode==='ground')out.push(t);return out;}
+ // 掩体点与僵尸在同一高度：地面，或僵尸当前所在的非据点台面（屋顶/走道/坡道；据点台面不算——在据点上就继续打）
+ const probe=(x,y,a)=>({x,y,bioZ:BioPlatforms.height(a),bioSurface:a.bioSurface||null,floor:0,r:a.r||ACTOR_R,mode:'ground'});
+ function flatSurface(a){const sid=a.bioSurface;if(!sid)return true;const ar=world.arena;if(ar.forts?.some(f=>f.surfaceId===sid))return false;return !!ar.platforms?.some(q=>q.sid===sid);}
+ const proxy=(a,p)=>({x:p.x,y:p.y,r:a.r||ACTOR_R,bioZ:BioPlatforms.height(a),bioSurface:a.bioSurface||null,bioAir:false,floor:a.floor||0,zombie:true,modeIndex:a.modeIndex});
+ // 某人类能否看见并打到点 p（视线 + 子弹线都通，且在 950 内）
+ function exposedTo(h,p){if(dist2(h.x,h.y,p.x,p.y)>950*950)return false;return FloorCombat.clear(h,p,'vs')&&FloorCombat.clear(h,p,'bl');}
+ // 人类会小范围走动：除了当前位置，还要从垂直于视线方向左右各 36 px 的位置看不到
+ function exposures(p,H){let n=0;for(const h of H)if(exposedTo(h,p))n++;return n;}
+ function covered(p,H,strict=true){for(const h of H){if(exposedTo(h,p))return false;if(!strict)continue;const d=dist(h.x,h.y,p.x,p.y)||1;if(d>950)continue;const nx=-(p.y-h.y)/d*36,ny=(p.x-h.x)/d*36;
+  for(const k of [1,-1]){const q={x:h.x+nx*k,y:h.y+ny*k,bioZ:h.bioZ,bioSurface:h.bioSurface,floor:h.floor||0,r:h.r,mode:'ground'};if(h.bioSurface?FloorSystem.contains(world.arena.platforms.find(s=>s.sid===h.bioSurface)||world.arena.bounds,q.x,q.y,0):true){if(exposedTo(q,p))return false;}}}
+  return true;}
+ function committed(a){const ai=a.ai,e=ai.bioEdge;return !!(a.bioAir||!flatSurface(a)||a.clawAt!=null||ai.bioRunup||ai.bioGroundExit||ai.bioLaneRetreat||ai.bioLaneWait||a.climb393||ai.z392?.phase==='climb'||(e&&dist2(a.x,a.y,e.a.x,e.a.y)<60**2)||a.pounce391);}
+ // 可站：与僵尸同一台面（或地面）、身体放得下；可走：从 p 到 q 身体直线扫过不碰静态障碍、不出台面（BioZombieTactics.bodyClear，不看动态角色）
+ const tgt=(a,q)=>({x:q.x,y:q.y,surfaceId:a.bioSurface||null,bioUseLinks:false});
+ function okPoint(a,p){const pr=proxy(a,p);if(!FloorSystem.contains(world.arena.bounds,p.x,p.y,(a.r||ACTOR_R)+6))return false;if(!a.bioSurface&&BioPlatforms.surfaceAt(p.x,p.y,40,(a.r||ACTOR_R)+2))return false;pr.r+=2;return BioZombieTactics.bodyClear(pr,tgt(a,p),false);}
+ const seg=(a,p,q)=>{const pr=proxy(a,p);pr.r+=2;return BioZombieTactics.bodyClear(pr,tgt(a,q),false);};
+ function clearState(a){const ai=a.ai;ai.path=null;ai.goal=null;if(!a.bioAir)ai.bioEdge=null;ai.bioRunup=null;const s=ai.bioTacticsZ;if(s){s.phase='advance';s.cycle=null;s.epoch=null;s.last=null;}}
+ // 找掩体：环形采样，直线可达或经一个直线可达的中转点可达；被所有人类挡住视线/射击线
+ function pick(a,H,avoid){
+  const L=lv(),R=C.T.maxR[L],out=[],straight=[];const others=G.actors.filter(z=>z!==a&&z.alive&&z.zombie&&z.ai?.cover3910?.spot).map(z=>z.ai.cover3910.spot);
+  const here={x:a.x,y:a.y};if(covered(probe(a.x,a.y,a),H,false))return {x:a.x,y:a.y,legs:[],len:0,here:1};
+  const mind=p=>{let m=1e9;for(const h of H)m=Math.min(m,dist(h.x,h.y,p.x,p.y));return m;};
+  const cands=[];for(const r of [60,100,150,210,280,360,440])if(r<=R)for(let k=0;k<16;k++){const an=k/16*TAU+(r%3)*.13;cands.push({x:a.x+Math.cos(an)*r,y:a.y+Math.sin(an)*r,r});}
+  for(const q of cands){if(!okPoint(a,q))continue;q.straight=seg(a,here,q);if(q.straight)straight.push(q);q.loose=covered(probe(q.x,q.y,a),H,false);q.cov=q.loose&&covered(probe(q.x,q.y,a),H);
+   if(avoid&&dist2(q.x,q.y,avoid.x,avoid.y)<50*50||others.some(o=>dist2(o.x,o.y,q.x,q.y)<40*40))q.cov=q.loose=false;}
+  let best=null;const score=(len,p)=>len-.45*Math.min(600,mind(p));
+  for(const key of ['cov','loose']){if(best)break;
+  for(const q of cands){if(!q[key]||q.straight==null)continue;
+   if(q.straight){const len=q.r,sc=score(len,q);if(!best||sc<best.sc)best={x:q.x,y:q.y,legs:[{x:q.x,y:q.y}],len,sc};continue;}
+   // 拐角：经一个直线可达的中转点
+   const mids=straight.filter(m=>m!==q).sort((m1,m2)=>dist2(m1.x,m1.y,q.x,q.y)-dist2(m2.x,m2.y,q.x,q.y)).slice(0,6);
+   for(const m of mids){if(!seg(a,m,q))continue;const len=m.r+dist(m.x,m.y,q.x,q.y);if(len>R*1.5)continue;const sc=score(len,q);if(!best||sc<best.sc)best={x:q.x,y:q.y,legs:[{x:m.x,y:m.y},{x:q.x,y:q.y}],len,sc,two:1};break;}
+  }}
+  if(best&&!cands.some(q=>q.cov&&q.x===best.x&&q.y===best.y))best.loose=1;
+  // 没有完全挡住的点：退到直线可达、看得见自己的人最少（且比原地少）的点，越远离人类越好
+  if(!best&&!avoid){const e0=exposures(probe(a.x,a.y,a),H);let fb=null;
+   for(const q of straight){const e=exposures(probe(q.x,q.y,a),H);if(e>=e0)continue;const sc=e*400+q.r*.5-.6*Math.min(600,mind(q));if(!fb||sc<fb.sc)fb={x:q.x,y:q.y,legs:[{x:q.x,y:q.y}],len:q.r,sc,part:1};}
+   best=fb;}
+  return best;
+ }
+ function end(a,why){const c=a.ai.cover3910;if(!c)return;C.stats[why]=(C.stats[why]||0)+1;a.ai.cover3910=null;a.ai.cover3910Cool=G.time+(why==='giveUp'||why==='noSpot'?4:1.5);clearState(a);}
+ // 每帧：返回 true 表示本帧由掩体逻辑控制（不跑原 AI）
+ C.step=function(a,dt){
+  if(C.match!==G.matchId){C.match=G.matchId;reset();}
+  if(!C.on||!bio()||!a.ai||a.isPlayer||!a.alive||!a.zombie||G.modeState?.phase!=='fight'){if(a.ai?.cover3910)a.ai.cover3910=null;return false;}
+  const ai=a.ai,L=lv(),T=C.T,now=G.time,frac=a.hp/Math.max(1,a.maxHp),life=a.zombieSince399||0;let c=ai.cover3910;
+  if(c&&(c.life!==life||c.round!==G.modeState.round)){ai.cover3910=c=null;}
+  if(!c){
+   // 犯傻标记：本次残血不找掩体，回到 low+0.15 以上再重置
+   if(ai.dumb3910&&(frac>T.low[L]+.15||ai.dumb3910.life!==life))ai.dumb3910=null;
+   if(frac>T.low[L]||now-(a.lastHitT??-99)>1||ai.dumb3910||now<(ai.cover3910Cool||0)){if(ai.pend3910&&now-(a.lastHitT??-99)>1)ai.pend3910=null;return false;}
+   if(!ai.pend3910||ai.pend3910.life!==life){ai.pend3910={at:now,life};C.stats.trig++;
+    if(rnd(a,'dumb')<T.dumb[L]){ai.dumb3910={life};ai.pend3910=null;C.stats.dumb++;return false;}}
+   if(now-ai.pend3910.at<T.react[L]*(.7+.6*rnd(a,'react')))return false;     // 反应延迟内照常冲
+   if(committed(a)){const k=a.bioAir?'cAir':a.bioSurface?'cSurf':'cOther';C.stats[k]=(C.stats[k]||0)+1;if(k==='cSurf'){const m=C.stats.surfs||(C.stats.surfs={});m[a.bioSurface]=(m[a.bioSurface]||0)+1;}return false;}
+   const H=humans();if(!H.length){ai.pend3910=null;return false;}
+   for(const h of H)if(!h.bioSurface&&!h.bioAir&&dist2(h.x,h.y,a.x,a.y)<T.close[L]**2){C.stats.cClose=(C.stats.cClose||0)+1;return false;} // 有人贴脸 → 打
+   ai.pend3910=null;
+   const sp=pick(a,H,null);if(!sp){C.stats.noSpot++;ai.cover3910Cool=now+2;return false;}
+   c=ai.cover3910={life,round:G.modeState.round,at:now,surf:a.bioSurface||null,spot:{x:sp.x,y:sp.y},legs:sp.legs,li:0,best:1e9,prog:now,arrived:sp.here?now:null,picks:1,chk:now};
+   C.stats.start++;if(a.bioSurface)C.stats.onSurf=(C.stats.onSurf||0)+1;if(sp.two)C.stats.twoLeg++;if(sp.loose)C.stats.loose=(C.stats.loose||0)+1;if(sp.part)C.stats.partial=(C.stats.partial||0)+1;if(sp.here)C.stats.inPlace++;clearState(a);
+  }
+  C.stats.frames++;
+  const H=humans(),cx=a.ctrl;cx.fire=false;
+  if(frac>=T.resume[L]){C.stats.healed++;end(a,'resumeHp');return false;}
+  if(!H.length){end(a,'timeout');return false;}
+  let near=null,nd=1e9;for(const h of H){const d=dist(h.x,h.y,a.x,a.y);if(d<nd){nd=d;near=h;}}
+  for(const h of H)if(!h.bioSurface&&!h.bioAir&&dist2(h.x,h.y,a.x,a.y)<T.close[L]**2){end(a,'close');return false;}
+  if(now-c.at>30){end(a,'timeout');return false;}
+  if(a.bioAir||(a.bioSurface||null)!==c.surf){end(a,'giveUp');return false;}          // 被击退/掉落/离开原台面等意外 → 交还原 AI
+  // 已到位：站住回血；被重新看到并挨打 → 换点（最多 3 次）
+  if(c.arrived!=null){cx.mx=cx.my=0;const ta=near?Math.atan2(near.y-a.y,near.x-a.x):a.ang;cx.aim=a.ang+clamp(angDiff(a.ang,ta),-3*dt,3*dt);
+   if(now-c.chk>=.4){c.chk=now;if(now-(a.lastHitT??-99)<.6&&!covered(probe(a.x,a.y,a),H)){C.stats.exposed++;
+     if(c.picks>=3){end(a,'giveUp');return false;}
+     const sp=pick(a,H,c.spot);if(!sp||sp.here){end(a,'giveUp');return false;}
+     c.spot={x:sp.x,y:sp.y};c.legs=sp.legs;c.li=0;c.best=1e9;c.prog=now;c.arrived=null;c.picks++;C.stats.repick++;}}
+   return true;}
+  // 前往掩体（直接沿已验证的地面直线走）
+  const g=c.legs[c.li]||c.spot,d=dist(a.x,a.y,g.x,g.y);
+  if(d<14){if(c.li<c.legs.length-1){c.li++;c.best=1e9;c.prog=now;}else{c.arrived=now;C.stats.arrive++;cx.mx=cx.my=0;return true;}}
+  if(d<c.best-6){c.best=d;c.prog=now;}else if(now-c.prog>.9){C.stats.stuck++;if(c.picks>=3){end(a,'giveUp');return false;}
+   const sp=pick(a,H,c.spot);if(!sp){end(a,'giveUp');return false;}c.spot={x:sp.x,y:sp.y};c.legs=sp.legs;c.li=0;c.best=1e9;c.prog=now;c.arrived=sp.here?now:null;c.picks++;C.stats.repick++;return true;}
+  const ux=(g.x-a.x)/(d||1),uy=(g.y-a.y)/(d||1);cx.mx=ux;cx.my=uy;
+  const face=Math.atan2(uy,ux),turn=(BioZombieSense.profile(a).turn||.75)*2;cx.aim=a.ang+clamp(angDiff(a.ang,face),-turn*dt,turn*dt);
+  return true;
+ };
+ C.reset=reset;
+ C.install=function(){
+  const zu=updateZombieAI;updateZombieAI=function(a,dt){let mine=false;try{mine=C.step(a,dt);}catch(e){C.err=String(e&&e.stack||e).slice(0,300);mine=false;if(a.ai)a.ai.cover3910=null;}if(mine)return;return zu(a,dt);};
+  // 没看见人、没听到枪声、也没有刚丢失的目标时：不再挨个去空据点转，直接奔最近的活人类（无脑冲）
+  const pc=BioZombieTactics.perceive;BioZombieTactics.perceive=function(a,D){const r=pc.call(this,a,D);
+   if(!C.on||!bio()||r.target||a.ai.lastHuman||!world.arena?.forts?.includes(r.goal))return r;
+   let best=null,bd=Infinity;for(const t of G.actors){if(!t.alive||t.zombie||t.mode!=='ground')continue;const d=dist2(a.x,a.y,t.x,t.y);if(d<bd){bd=d;best=t;}}
+   if(best){r.goal={x:best.x,y:best.y,bioZ:BioPlatforms.height(best),bioAir:false,surfaceId:best.bioSurface||null};C.stats.hunt=(C.stats.hunt||0)+1;}
+   return r;};
+ };
+ return C;
+})();
+Cover3910.install();window.Cover3910=Cover3910;
 // 2.8.1 菜单预生成：固定地图生成很快，启动和切换模式后立即生成，避免大地图预览/缩略图停在旧内容
 {const kick281=()=>{if(G.state!=='menu'||UI.generating)return;if(Settings.mode==='br'){if(world&&world.config?.mode!=='br')UI.newIsland().catch(()=>{});return;}const cfg=mapConfig(Settings);if(world&&world.config?.mode===cfg.mode&&world.arena?.id===cfg.mapId)return;UI.newIsland().catch(()=>{});};
  setTimeout(kick281,150);document.querySelectorAll('#modePicker [data-mode]').forEach(b=>b.addEventListener('click',()=>setTimeout(kick281,60)));}
