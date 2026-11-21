@@ -27542,6 +27542,7 @@ window.Bio368UI=Bio368UI;
 // Installed only in the standalone 3D build. The match still runs in the original loop.
 {
   const originalMatchStart = UI.onMatchStart;
+  const originalToMenu = UI.toMenu;
   const originalViewSize = viewSize;
   const projection = WaterplantProjection272;
   const drawArenaGround = ArenaMaps.drawGround;
@@ -27711,6 +27712,11 @@ window.Bio368UI=Bio368UI;
     projection.setTacticalView(true);
     const result=originalMatchStart.call(this);
     if(fault)pauseForGraphics();
+    return result;
+  };
+  UI.toMenu=function() {
+    const result=originalToMenu.call(this);
+    BF340.hudTick();
     return result;
   };
   viewSize=function() {
